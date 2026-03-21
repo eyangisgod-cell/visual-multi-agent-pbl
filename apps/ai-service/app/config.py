@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     MINIO_SECRET_KEY: str = Field(..., env="MINIO_SECRET_KEY")
     MINIO_SECURE: bool = False
 
+    # JWT
+    JWT_SECRET: str = Field(default="visual-pbl-jwt-secret-key-change-in-production", env="JWT_SECRET")
+
     # LLM
     LLM_PROVIDER: str = "mock"
     LLM_API_KEY: Optional[str] = None

@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.config import settings
-from app.api import health
+from app.api import health, auth
 
 app = FastAPI(
     title="Visual PBL AI Service",
@@ -20,6 +20,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(auth.router, prefix="/api/v1", tags=["authentication"])
 
 @app.get("/")
 async def root():
