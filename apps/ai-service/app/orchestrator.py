@@ -14,6 +14,7 @@ from .agents import (
     MarketerAgent,
     AssistantAgent,
 )
+from .llm.mock import create_mock_llm_config
 
 
 class AgentOrchestrator:
@@ -43,17 +44,8 @@ class AgentOrchestrator:
         self._initialized = False
 
     def _get_default_llm_config(self) -> Dict[str, Any]:
-        """Get default LLM configuration."""
-        return {
-            "config_list": [
-                {
-                    "model": "gpt-4",
-                    "api_key": "mock-key-for-dev",
-                    "base_url": "http://localhost:8000/v1",
-                }
-            ],
-            "cache_seed": None,
-        }
+        """Get default LLM configuration using mock provider."""
+        return create_mock_llm_config()
 
     def initialize_agents(self, agent_names: Optional[List[str]] = None) -> None:
         """
