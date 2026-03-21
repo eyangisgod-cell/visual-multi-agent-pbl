@@ -8,6 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "test": "jest",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push"
@@ -45,6 +48,7 @@
     "postcss": "8.4.33",
     "next-pwa": "5.6.0",
     "jest": "29.7.0",
-    "@testing-library/react": "14.1.2"
+    "@testing-library/react": "14.1.2",
+    "@playwright/test": "1.42.0"
   }
 }
