@@ -11,6 +11,13 @@ export {
   type AgentSpriteOptions,
 } from './AgentSprite';
 
+export {
+  AgentAnimationManager,
+  type AnimationConfig,
+  type EasingFunction,
+  type EmotionState,
+} from './AgentAnimationManager';
+
 export { MentorAgent } from './MentorAgent';
 export { DesignerAgent } from './DesignerAgent';
 export { AnalystAgent } from './AnalystAgent';
