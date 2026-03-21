@@ -18,6 +18,12 @@ export {
   type EmotionState,
 } from './AgentAnimationManager';
 
+export {
+  SpeechBubble,
+  type SpeechBubbleOptions,
+  type BubblePosition,
+} from './SpeechBubble';
+
 export { MentorAgent } from './MentorAgent';
 export { DesignerAgent } from './DesignerAgent';
 export { AnalystAgent } from './AnalystAgent';
