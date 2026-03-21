@@ -17,6 +17,13 @@
 | [设计决策记录](./2026-03-21-architecture-decisions.md) | 12 个关键决策的背景和理由 | ⭐⭐ 理解为什么 |
 | [待解决问题](./2026-03-21-pending-issues.md) | 风险和挑战跟踪清单 | ⭐⭐⭐ 持续更新 |
 
+### 实施计划文档
+
+| 文档 | 说明 | 状态 |
+|------|------|------|
+| [MVP 实施计划](./plans/2026-03-21-visual-pbl-mvp-plan.md) | Phase 0 完整任务 + Phase 1-6 概览 | ✅ 完整 |
+| [实施计划补充](./plans/2026-03-21-visual-pbl-mvp-plan-supplement.md) | Phase 1-6 完整任务分解 | ✅ 完整 |
+
 ---
 
 ## 📖 阅读指南
