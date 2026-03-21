@@ -1,17 +1,18 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field
 from typing import Optional, List
 
 class Settings(BaseSettings):
     # Database
-    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/pbl_platform"
+    DATABASE_URL: str = Field(..., env="DATABASE_URL")
 
     # Redis
-    REDIS_URL: str = "redis://localhost:6379"
+    REDIS_URL: str = Field(..., env="REDIS_URL")
 
     # MinIO
-    MINIO_ENDPOINT: str = "localhost:9000"
-    MINIO_ACCESS_KEY: str = "minioadmin"
-    MINIO_SECRET_KEY: str = "minioadmin123"
+    MINIO_ENDPOINT: str = Field(..., env="MINIO_ENDPOINT")
+    MINIO_ACCESS_KEY: str = Field(..., env="MINIO_ACCESS_KEY")
+    MINIO_SECRET_KEY: str = Field(..., env="MINIO_SECRET_KEY")
     MINIO_SECURE: bool = False
 
     # LLM

@@ -9,7 +9,7 @@ app = FastAPI(
     version="0.1.0"
 )
 
-# CORS configuration
+# CORS configuration - validated origins only, never allow wildcard with credentials
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ORIGINS,
@@ -19,7 +19,7 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(health.router, prefix="/api", tags=["health"])
+app.include_router(health.router, prefix="/api/v1", tags=["health"])
 
 @app.get("/")
 async def root():
