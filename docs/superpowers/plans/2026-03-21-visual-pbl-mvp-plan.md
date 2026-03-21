@@ -1307,4 +1307,113 @@ git commit -m "feat: setup database schemas and connections"
 
 ---
 
-**计划创建完成**。下一步：Dispatch `plan-document-reviewer` subagent 进行审查。
+## 审查流程说明
+
+### 设计文档审查（Design Review）
+
+**审查者**: `everything-claude-code:architect` 或 `superpowers:receiving-code-review`
+
+**审查要点**:
+1. 架构设计是否合理
+2. 技术选型是否恰当
+3. 是否有遗漏的关键组件
+4. 安全合规是否考虑周全
+
+### 计划文档审查（Plan Review）
+
+**审查者**: `plan-document-reviewer` subagent
+
+**审查要点**:
+1. 任务分解是否足够细致
+2. 每个任务是否有完整的代码示例
+3. 测试用例是否覆盖关键场景
+4. 任务依赖关系是否正确
+
+### 两阶段审查（执行阶段每个任务都需要）
+
+**阶段 1: 代码审查** (`superpowers:receiving-code-review`)
+- 代码是否正确实现需求
+- 测试是否通过
+- 代码风格是否符合规范
+- 是否有明显的安全问题
+
+**阶段 2: 验证审查** (`superpowers:verification-before-completion`)
+- 功能是否满足用户需求
+- 是否有边界情况遗漏
+- 是否可以提交到主分支
+- 是否需要补充文档
+
+---
+
+## 执行流程
+
+```
+设计文档 → 设计审查 → 修改 → 设计批准
+    ↓
+实施计划 → 计划审查 → 修改 → 计划批准
+    ↓
+subagent-driven-development
+    ├── Task 0.1 → 代码审查 → 验证审查 → Commit
+    ├── Task 0.2 → 代码审查 → 验证审查 → Commit
+    ├── Task 0.3 → 代码审查 → 验证审查 → Commit
+    └── ... (继续直到所有任务完成)
+    ↓
+MVP 完成 → 集成测试 → 发布
+```
+
+---
+
+## 完整文档导航
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| **主计划** | `2026-03-21-visual-pbl-mvp-plan.md` | Phase 0 完整任务 |
+| **补充计划** | `2026-03-21-visual-pbl-mvp-plan-supplement.md` | Phase 1-6 完整任务 |
+| **系统设计** | `../specs/2026-03-21-visual-pbl-platform-design.md` | 功能和架构设计 |
+| **技术架构** | `../specs/2026-03-21-technical-architecture.md` | 部署架构详解 |
+| **设计决策** | `../specs/2026-03-21-architecture-decisions.md` | 12 个 ADR 文档 |
+| **待解决问题** | `../specs/2026-03-21-pending-issues.md` | 风险和挑战清单 |
+
+---
+
+## 下一步行动
+
+请选择您要执行的操作：
+
+**A. 审查设计文档**（推荐先做）
+```
+调用 subagent: everything-claude-code:architect
+审查文档：docs/superpowers/specs/2026-03-21-visual-pbl-platform-design.md
+```
+
+**B. 审查实施计划**
+```
+调用 subagent: superpowers:receiving-code-review
+审查文档：docs/superpowers/plans/2026-03-21-visual-pbl-mvp-plan.md
+```
+
+**C. 直接开始执行 Phase 0**
+```
+调用 subagent: superpowers:subagent-driven-development
+从 Task 0.1 开始执行
+```
+
+---
+
+**计划创建完成**
+
+---
+
+## 附录：Phase 概览
+
+| Phase | 名称 | 任务数 | 预计时间 | 状态 |
+|-------|------|--------|----------|------|
+| **Phase 0** | 开发环境搭建 | 5 | 2 小时 | ✅ 完整 |
+| **Phase 1** | 用户认证系统 | 3 | 4 小时 | ✅ 补充文档中完整 |
+| **Phase 2** | PixiJS 游戏场景 | 5 | 6 小时 | ✅ 补充文档中完整 |
+| **Phase 3** | 智能体渲染系统 | 5 | 6 小时 | 📋 任务清单 |
+| **Phase 4** | AG2 智能体服务 | 5 | 8 小时 | 📋 任务清单 |
+| **Phase 5** | 项目任务系统 | 5 | 6 小时 | 📋 任务清单 |
+| **Phase 6** | 集成测试 + 优化 | 5 | 4 小时 | 📋 任务清单 |
+
+**总计**: 33 个任务，约 36 小时开发时间
