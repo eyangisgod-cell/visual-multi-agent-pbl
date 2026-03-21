@@ -52,6 +52,6 @@ logs/
 coverage/
 .nyc_output/
 
-# Git worktrees
-.worktrees/
+# Git worktrees (exclude worktrees directory but not phase-0 content)
 worktrees/
+.worktrees/**/logs/
