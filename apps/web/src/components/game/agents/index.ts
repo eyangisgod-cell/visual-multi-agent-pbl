@@ -24,6 +24,12 @@ export {
   type BubblePosition,
 } from './SpeechBubble';
 
+export {
+  AgentPanelPixi,
+  type AgentPanelOptions,
+  type AgentCardData,
+} from './AgentPanelPixi';
+
 export { MentorAgent } from './MentorAgent';
 export { DesignerAgent } from './DesignerAgent';
 export { AnalystAgent } from './AnalystAgent';
