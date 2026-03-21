@@ -1,0 +1,8 @@
+# Docker 数据卷
+postgres_data/
+redis_data/
+minio_data/
+
+# 临时文件
+*.log
+tmp/
