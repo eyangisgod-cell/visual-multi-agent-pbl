@@ -4,7 +4,16 @@
 
 set -e
 
-cd "$(dirname "$0")/../apps/web"
+# 获取脚本所在目录（支持 worktree）
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+WEB_DIR="$SCRIPT_DIR"
+
+# 如果在根目录的 .husky 中运行，切换到 apps/web
+if [ ! -f "$WEB_DIR/package.json" ]; then
+    WEB_DIR="$(cd "$(dirname "$0")/../apps/web" && pwd)"
+fi
+
+cd "$WEB_DIR"
 
 echo "=== Running pre-commit checks ==="
 
@@ -20,7 +29,7 @@ npm run lint --quiet || {
 
 # TypeScript 类型检查（快速）
 echo "Running TypeScript check..."
-npm run type-check --noEmit || {
+npx tsc --noEmit || {
     echo ""
     echo "❌ TypeScript 类型错误"
     echo "请修复类型错误后重新提交"
