@@ -19,7 +19,7 @@ import {
   MarketerAgent,
   AssistantAgent,
   AgentType,
-} from '../game/agents';
+} from '../components/game/agents';
 
 export interface AgentSceneConfig {
   canvasId: string;

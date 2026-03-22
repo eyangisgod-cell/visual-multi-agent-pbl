@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { useAgentStore } from '../stores/agentStore';
-import { AgentType, AgentStatus } from '../game/agents';
+import { AgentType, AgentStatus } from '../components/game/agents';
 
 export interface UseAgentOptions {
   autoSelect?: boolean;

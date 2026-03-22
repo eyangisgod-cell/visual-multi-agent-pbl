@@ -1,5 +1,5 @@
 import { Application, Sprite, Container, Graphics, Assets } from 'pixi.js'
-import { CampusScene } from './scenes/CampusScene'
+import { CampusScene } from '../scenes/CampusScene'
 
 export interface PlayerConfig {
   speed: number

@@ -12,7 +12,7 @@ import {
   TextStyle,
   FederatedPointerEvent,
 } from 'pixi.js';
-import { AgentType, AGENT_CONFIGS, AgentSprite, AgentStatus } from '../game/agents';
+import { AgentType, AGENT_CONFIGS, AgentSprite, AgentStatus } from './index';
 
 export interface AgentPanelOptions {
   x: number;
