@@ -1,7 +1,8 @@
 #!/bin/bash
 # scripts/fix-pr-ci.sh
-# 用法：bash scripts/fix-pr-ci.sh <branch-name>
+# 用法：bash scripts/fix-pr-ci.sh [branch-name]
 # 自动修复 CI 错误并推送
+# 如果在 worktree 中运行，自动检测当前分支
 
 set -e
 
@@ -16,12 +17,21 @@ NC='\033[0m'
 
 BRANCH=$1
 
+# 如果没有指定分支，使用当前分支
 if [ -z "$BRANCH" ]; then
-    echo -e "${RED}用法：bash scripts/fix-pr-ci.sh <branch-name>${NC}"
-    echo ""
-    echo "可用的分支："
-    git branch -r --no-merged origin/main | grep feature | sed 's/origin\///'
-    exit 1
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    echo -e "${YELLOW}未指定分支，使用当前分支：$BRANCH${NC}"
+fi
+
+# 检查是否是 worktree（在 worktree 中不需要 checkout）
+CURRENT_DIR="$(pwd)"
+IS_WORKTREE=0
+if [[ "$CURRENT_DIR" == *"/.worktrees/"* ]]; then
+    IS_WORKTREE=1
+    echo -e "${YELLOW}检测到在 worktree 中运行，跳过 checkout${NC}"
+    # 在 worktree 中获取当前分支
+    BRANCH=$(git rev-parse --abbrev-ref HEAD)
+    echo -e "${YELLOW}当前分支：$BRANCH${NC}"
 fi
 
 echo -e "${GREEN}=========================================${NC}"
@@ -29,15 +39,18 @@ echo -e "${GREEN}修复 PR CI 错误${NC}"
 echo -e "${GREEN}分支：$BRANCH${NC}"
 echo -e "${GREEN}=========================================${NC}"
 
-# 检查分支是否存在
-if ! git rev-parse --verify "$BRANCH" &>/dev/null; then
-    echo -e "${RED}分支 $BRANCH 不存在${NC}"
-    exit 1
-fi
+# 只在非 worktree 环境下切换分支
+if [ $IS_WORKTREE -eq 0 ]; then
+    # 检查分支是否存在
+    if ! git rev-parse --verify "$BRANCH" &>/dev/null; then
+        echo -e "${RED}分支 $BRANCH 不存在${NC}"
+        exit 1
+    fi
 
-# 切换到分支
-echo -e "${YELLOW}切换到分支 $BRANCH${NC}"
-git checkout "$BRANCH"
+    # 切换到分支
+    echo -e "${YELLOW}切换到分支 $BRANCH${NC}"
+    git checkout "$BRANCH"
+fi
 
 # 拉取最新代码
 echo -e "${YELLOW}拉取最新代码...${NC}"
