@@ -1,0 +1,75 @@
+name: Create PR on Push to Feature Branch
+
+on:
+  push:
+    branches:
+      - 'feature/**'
+
+jobs:
+  create-pr:
+    name: Create Pull Request
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check if PR already exists
+        id: check-pr
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              head: branch,
+              state: 'open'
+            });
+            return prs.length > 0 ? 'exists' : 'new';
+
+      - name: Create Pull Request
+        if: steps.check-pr.outputs.result == 'new'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const phaseMatch = branch.match(/feature\/phase-(\d+)/);
+            const phaseNum = phaseMatch ? phaseMatch[1] : 'unknown';
+
+            // 根据分支名确定标题
+            const titleMap = {
+              'phase-0': 'Phase 0 - 开发环境搭建',
+              'phase-2': 'Phase 2 - PixiJS 游戏场景',
+              'phase-3': 'Phase 3 - AI Agent 渲染系统',
+              'phase-4': 'Phase 4 - AG2 智能体服务',
+              'phase-5': 'Phase 5 - 项目任务系统',
+              'phase-7': 'Phase 7 - 管理后台开发',
+              'phase-8': 'Phase 8 - 动态场景生成器',
+            };
+
+            const title = titleMap[branch.replace('feature/', '')] || `Update from ${branch}`;
+
+            const { data: pr } = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              head: branch,
+              base: 'main',
+              body: `## Changes
+              This PR contains updates from \`${branch}\`.
+
+              ### Checklist
+              - [ ] Code compiles without errors
+              - [ ] Tests pass (npm test, pytest)
+              - [ ] ESLint/Ruff checks pass
+              - [ ] No new security vulnerabilities
+
+              ### Auto-generated
+              Created by GitHub Actions on push to feature branch.
+
+              <!-- auto-merge -->
+              `,
+              labels: ['auto-merge']
+            });
+
+            core.notice(`Created PR #${pr.number}: ${title}`);

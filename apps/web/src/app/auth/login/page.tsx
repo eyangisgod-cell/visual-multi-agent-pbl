@@ -44,8 +44,8 @@ export default function LoginPage() {
       // Update auth context
       login(data.user)
 
-      // Redirect to home page
-      router.push('/')
+      // Redirect to game page
+      router.push('/game')
     } catch (err) {
       setError('Network error. Please try again.')
     } finally {

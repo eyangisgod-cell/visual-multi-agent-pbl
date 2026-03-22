@@ -31,14 +31,11 @@ const nextConfig = {
   // Experimental features for performance
   experimental: {
     optimizePackageImports: ['pixi.js', 'framer-motion', '@radix-ui/react-dialog'],
-    // Server Components can be enabled if needed
-    // serverComponents: true,
   },
 
   // Webpack optimizations
   webpack: (config, { isServer }) => {
     if (!isServer) {
-      // Exclude PixiJS from client bundle if dynamically imported
       config.externals = config.externals || [];
     }
     return config;

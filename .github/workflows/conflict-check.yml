@@ -1,0 +1,59 @@
+name: Daily Conflict Check
+
+on:
+  schedule:
+    # 每天 UTC 时间 00:00 运行（北京时间早上 8 点）
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # 支持手动触发
+
+jobs:
+  conflict-check:
+    name: Check Merge Conflicts
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取所有分支
+
+      - name: Run conflict check
+        id: check
+        run: |
+          chmod +x scripts/check-merge-conflicts.sh
+          bash scripts/check-merge-conflicts.sh || true
+
+      - name: Create Issue if conflicts found
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['merge-conflict'],
+              state: 'open'
+            });
+
+            if (issues.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Merge Conflicts Detected',
+                body: `## Merge Conflict Report
+
+                Some feature branches have merge conflicts with main:
+
+                ${process.env.CONFLICT_BRANCHES || 'See workflow output for details'}
+
+                ### Recommended Actions:
+                1. Review conflicting files
+                2. Create a merge branch to resolve conflicts
+                3. Test after merging
+                4. Update this issue with resolution status
+
+                ---
+                *Automatically created by conflict-check workflow*
+                `,
+                labels: ['merge-conflict', 'priority-high']
+              });
+            }
