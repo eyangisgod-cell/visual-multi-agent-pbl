@@ -18,7 +18,6 @@ test.describe('Authentication Flow', () => {
 
   test('should show validation errors for empty fields', async ({ page }) => {
     const loginButton = page.locator('button[type="submit"]');
-
     await loginButton.click();
 
     // Should show validation error or not submit

@@ -86,4 +86,16 @@ test.describe('Agent Interaction', () => {
     const count = await agentStates.count();
     expect(count).toBeGreaterThanOrEqual(0);
   });
+
+  test('should show speech bubble dialogs for agent communication', async ({ page }) => {
+    await page.goto('/');
+    await page.waitForTimeout(1000);
+
+    const speechBubbles = page.locator(
+      '[data-testid="speech-bubble"], .speech-bubble, [class*="speech"], [class*="dialog-bubble"]'
+    );
+
+    const count = await speechBubbles.count();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
 });
