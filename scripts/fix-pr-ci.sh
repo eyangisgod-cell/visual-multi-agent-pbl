@@ -26,7 +26,8 @@ fi
 # 检查是否是 worktree（在 worktree 中不需要 checkout）
 CURRENT_DIR="$(pwd)"
 IS_WORKTREE=0
-if [[ "$CURRENT_DIR" == *"/.worktrees/"* ]]; then
+# 使用正则表达式匹配 worktree 路径
+if echo "$CURRENT_DIR" | grep -q '/\.worktrees/'; then
     IS_WORKTREE=1
     echo -e "${YELLOW}检测到在 worktree 中运行，跳过 checkout${NC}"
     # 在 worktree 中获取当前分支
