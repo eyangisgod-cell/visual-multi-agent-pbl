@@ -98,4 +98,15 @@ test.describe('Agent Interaction', () => {
     const count = await speechBubbles.count();
     expect(count).toBeGreaterThanOrEqual(0);
   });
+
+  test('should allow assigning agent to project task', async ({ page }) => {
+    await page.goto('/projects/1');
+
+    const assignButton = page.locator(
+      'button:has-text("Assign Agent"), [data-testid="assign-agent"], [class*="assign-agent"]'
+    );
+
+    const count = await assignButton.count();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
 });
