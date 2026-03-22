@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Button } from '../ui/button'
+import { Button } from '../ui/Button'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
