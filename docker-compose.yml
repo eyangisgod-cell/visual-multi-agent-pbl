@@ -1,0 +1,8 @@
+# docker-compose.yml (根目录)
+# 快捷方式，链接到 docker/docker-compose.dev.yml
+# 使用方式：docker-compose up -d
+#
+# 完整配置请见 docker/docker-compose.dev.yml
+
+include:
+  - docker/docker-compose.dev.yml
