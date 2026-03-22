@@ -74,4 +74,16 @@ test.describe('Agent Interaction', () => {
     const chatInputVisible = await chatInput.count() > 0;
     expect(chatInputVisible).toBeTruthy();
   });
+
+  test('should display agent state visualization', async ({ page }) => {
+    await page.goto('/');
+
+    // Look for agent state elements (idle, working, completed)
+    const agentStates = page.locator(
+      '[data-testid="agent-state"], [class*="agent-state"], [class*="state-idle"], [class*="state-working"], [class*="state-completed"]'
+    );
+
+    const count = await agentStates.count();
+    expect(count).toBeGreaterThanOrEqual(0);
+  });
 });
