@@ -11,7 +11,7 @@ import React, { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
 import { useAgentStore, AgentInstance } from '../stores/agentStore';
-import { AgentType, AGENT_CONFIGS, AgentStatus } from '../components/game/agents';
+import { AgentType, AGENT_CONFIGS, AgentStatus } from '../game/agents';
 import SpeechBubble from './SpeechBubble';
 
 export interface AgentStateVisualizerProps {

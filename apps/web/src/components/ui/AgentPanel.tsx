@@ -10,7 +10,7 @@
 import React, { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-import { AgentType, AGENT_CONFIGS, AgentStatus } from '../components/game/agents';
+import { AgentType, AGENT_CONFIGS, AgentStatus } from '../game/agents';
 
 export interface AgentCardProps {
   agentType: AgentType;
