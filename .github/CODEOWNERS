@@ -1,0 +1,22 @@
+# Code Owners
+# Defines who is responsible for specific files or directories
+# Format: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Platform core team
+* @eyangisgod-cell
+
+# Frontend ownership
+/apps/web/ @eyangisgod-cell
+
+# Backend/AI Service ownership
+/apps/ai-service/ @eyangisgod-cell
+
+# Docker and DevOps
+/docker/ @eyangisgod-cell
+/.github/workflows/ @eyangisgod-cell
+
+# Documentation
+/docs/ @eyangisgod-cell
+
+# Database schema
+/apps/web/prisma/ @eyangisgod-cell

@@ -9,7 +9,7 @@ __pycache__/
 *.pyo
 *.egg-info/
 .eggs/
-.Python
+. Python
 
 # 构建输出
 .next/
@@ -24,6 +24,7 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.docker
 
 # Docker
 docker-compose.override.yml
@@ -51,7 +52,13 @@ logs/
 # 测试
 coverage/
 .nyc_output/
+playwright-report/
+test-results/
+.playwright/
 
-# Git worktrees (exclude worktrees directory but not phase-0 content)
+# Git worktrees
+.worktrees/
 worktrees/
-.worktrees/**/logs/
+
+# GitHub Actions
+.github/workflows/*.log
