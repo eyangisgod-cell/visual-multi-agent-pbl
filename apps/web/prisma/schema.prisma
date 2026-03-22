@@ -7,10 +7,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Role {
+  USER
+  ADMIN
+}
+
 model User {
   id            String    @id @default(uuid()) @db.Uuid
   username      String?   @unique @db.VarChar(50)
-  passwordHash  String?   @map("password_hash") @db.VarChar(255)
+  passwordHash  String?   @map("password_hash\") @db.VarChar(255)
   nickname      String?   @db.VarChar(50)
   avatarUrl     String?   @map("avatar_url") @db.Text
   grade         Int?
@@ -18,6 +23,7 @@ model User {
   invitedBy     String?   @map("invited_by") @db.Uuid
   points        Int       @default(0)
   level         Int       @default(1)
+  role          Role      @default(USER)
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
@@ -130,4 +136,46 @@ model Work {
   project     Project? @relation(fields: [projectId], references: [id])
 
   @@map("works")
+}
+
+model LlmConfig {
+  id          String   @id @default(uuid())
+  provider    String   @unique @db.VarChar(50)
+  apiKey      String   @map("api_key") @db.VarChar(255)
+  baseUrl     String?  @map("base_url") @db.Text
+  models      Json?
+  isActive    Boolean  @default(false) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("llm_configs")
+}
+
+model AgentConfig {
+  id          String   @id @default(uuid())
+  agentType   String   @unique @map("agent_type") @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  personality Json?
+  skills      Json?
+  appearance  Json?
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("agent_configs")
+}
+
+model SceneTemplate {
+  id          String   @id @default(uuid())
+  sceneType   String   @unique @map("scene_type") @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  config      Json?
+  thumbnail   String?  @db.Text
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("scene_templates")
 }
