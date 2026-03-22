@@ -49,7 +49,7 @@ export class AnalystAgent extends AgentSprite {
 
     // Headband
     graphics.lineStyle(4, 0x2C3E50);
-    graphics.drawArc(0, -40, 25, Math.PI, 0);
+    graphics.arc(0, -40, 25, Math.PI, 0);
 
     // Left ear cup
     graphics.beginFill(0x34495E);
@@ -63,7 +63,7 @@ export class AnalystAgent extends AgentSprite {
 
     // Microphone boom
     graphics.lineStyle(2, 0x2C3E50);
-    graphics.drawArc(-25, -25, 8, 0, Math.PI * 0.5);
+    graphics.arc(-25, -25, 8, 0, Math.PI * 0.5);
 
     // Mic
     graphics.beginFill(0x1ABC9C);

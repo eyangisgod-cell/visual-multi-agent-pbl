@@ -369,8 +369,8 @@ export class AgentSprite extends Container {
 
     // Sound waves
     this.statusIndicator.lineStyle(2, 0x3498DB);
-    this.statusIndicator.drawArc(0, -40, 12, Math.PI * 0.2, Math.PI * 0.8);
-    this.statusIndicator.drawArc(0, -40, 16, Math.PI * 0.15, Math.PI * 0.85);
+    this.statusIndicator.arc(0, -40, 12, Math.PI * 0.2, Math.PI * 0.8);
+    this.statusIndicator.arc(0, -40, 16, Math.PI * 0.15, Math.PI * 0.85);
   }
 
   protected drawWorkingIndicator(): void {

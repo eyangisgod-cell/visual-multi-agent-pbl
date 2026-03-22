@@ -45,7 +45,7 @@ export class AssistantAgent extends AgentSprite {
 
     // Earpiece wire
     graphics.lineStyle(2, 0x2C3E50);
-    graphics.drawArc(18, -20, 10, Math.PI * 0.5, Math.PI);
+    graphics.arc(18, -20, 10, Math.PI * 0.5, Math.PI);
 
     // Earpiece bud
     graphics.beginFill(0x34495E);
