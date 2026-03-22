@@ -2,7 +2,7 @@
 
 **日期**: 2026-03-22
 **分支**: feature/phase-8-scene-generator
-**最新提交**: 86ab0bd
+**最新提交**: 3ba2567
 
 ---
 
@@ -14,23 +14,100 @@
 |------|--------|------|------|
 | ESLint 解析错误 | 2 | ✅ 完成 | SubmissionAndRubric.tsx 括号缺失 |
 | 文件路径大小写 | 4 | ✅ 完成 | button.tsx → Button.tsx |
-| 模块导入路径 | 10 | ✅ 完成 | ../game/agents → 正确路径 |
-| UI 组件导出方式 | 2 | ✅ 完成 | default → named export |
+| 模块导入路径 | 10+ | ✅ 完成 | ../game/agents → 正确路径 |
+| UI 组件导出方式 | 3 | ✅ 完成 | default → named export |
 | tsconfig 排除测试 | 1 | ✅ 完成 | 排除测试文件减少噪声 |
+| PixiJS drawArc | 10 | ✅ 完成 | 替换为 arc() 方法 |
+| 类型定义文件 | 1 | ✅ 完成 | next.d.ts → global.d.ts |
 
 ### 剩余错误 ❌（需要手动修复）
 
 | 类别 | 错误数 | 优先级 | 说明 |
 |------|--------|--------|------|
 | ServerContextJSONValue | 7 | 🔴 高 | Next.js 类型扩展未生效 |
-| PixiJS drawArc | 10 | 🔴 高 | v8 API 变更，需替换为 arc() |
 | Container.userData | 6 | 🟡 中 | PixiJS v8 类型定义问题 |
-| Agent 类缺少方法 | 5 | 🟡 中 | getAccessoryColor 等 |
+| strokeThickness | 1 | 🟡 中 | PixiJS v8 TextStyleOptions |
+| Agent 类缺少方法 | 4 | 🟡 中 | getAccessoryColor 等 |
 | PixiApp.tsx | 8 | 🟡 中 | webgl2、空值检查、参数错误 |
-| AgentStateVisualizer | 12 | 🟢 低 | 类型推断和未知类型 |
-| 其他 | 5 | 🟢 低 | 变量未定义等 |
+| ProgressDashboard | 3 | 🟡 中 | unassigned 变量未定义 |
+| AgentStateVisualizer | 10 | 🟢 低 | 类型推断和未知类型 |
+| useAgent.ts | 6 | 🟢 低 | setState 参数错误 |
+| 其他 | 2 | 🟢 低 | objectLayer 私有属性 |
 
-**总计剩余**: 约 53 个 TypeScript 错误
+**总计剩余**: 约 45 个 TypeScript 错误
+
+---
+
+## Pre-commit Hook 自动检查机制
+
+### 触发时机
+
+**Pre-commit hook 在 `git commit` 时自动触发**，但注意：
+- ✅ **自动运行**: ESLint 和 TypeScript 检查
+- ❌ **不会自动修复**: 只能发现问题，不能自动修复逻辑错误
+- ⚠️ **测试不运行**: 当前配置只运行 lint 和 type-check，不运行单元测试
+
+### 当前配置 (`apps/web/.husky/pre-commit`)
+
+```bash
+#!/bin/bash
+# 1. ESLint 检查（警告但不阻止）
+npm run lint --quiet || echo "⚠️ ESLint 检查未通过"
+
+# 2. TypeScript 类型检查（错误则阻止提交）
+npm run type-check --noEmit || {
+    echo "❌ TypeScript 类型错误"
+    exit 1
+}
+```
+
+### 提交限制规则
+
+| 检查项 | 失败后果 |
+|--------|---------|
+| ESLint 错误 | ⚠️ 警告但允许提交 |
+| TypeScript 错误 | ❌ 阻止提交 |
+| 单元测试 | ❓ 当前不运行 |
+
+### CI 失败自动修复
+
+**当前能力**:
+- ✅ **格式错误**: ESLint/Ruff 可自动修复
+- ❌ **类型错误**: 需要手动修复（逻辑问题）
+- ❌ **测试失败**: 需要手动修复
+
+**自动修复脚本**: `scripts/fix-pr-ci.sh`
+```bash
+# 在 worktree 中运行
+bash ../../scripts/fix-pr-ci.sh feature/phase-8-scene-generator
+```
+
+### 推荐的完整检查流程
+
+```bash
+# 1. 本地运行完整 CI 检查
+cd apps/web
+npm run lint        # ESLint
+npm run type-check  # TypeScript
+npm test            # 单元测试
+
+# 2. 提交（自动触发 pre-commit hook）
+git add -A
+git commit -m "feat: ..."
+
+# 3. 推送（触发 GitHub Actions CI）
+git push
+
+# 4. CI 通过后自动合并（如果有 auto-merge 标签）
+```
+
+### 合并分支规则
+
+| CI 状态 | 合并行为 |
+|--------|---------|
+| ✅ 全部通过 + auto-merge 标签 | 自动合并到 main |
+| ❌ 任一检查失败 | 阻止合并，需要修复 |
+| ⚠️ 部分通过 | 等待所有检查完成 |
 
 ---
 
