@@ -11,7 +11,7 @@ export async function GET() {
     });
 
     // 隐藏敏感的 API Key
-    const sanitizedConfigs = llmConfigs.map((config) => ({
+    const sanitizedConfigs = llmConfigs.map((config: { apiKey?: string | null }) => ({
       ...config,
       apiKey: config.apiKey ? `${config.apiKey.substring(0, 8)}...` : null,
     }));
