@@ -39,6 +39,13 @@ export class DesignerAgent extends AgentSprite {
   }
 
   /**
+   * Get the accessory color for this agent
+   */
+  public getAccessoryColor(): number {
+    return DESIGNER_CONFIG.accessoryColor;
+  }
+
+  /**
    * Create a stylish beret
    */
   private createBeret(): Graphics {

@@ -207,8 +207,7 @@ export class AgentSprite extends Container {
       fontSize: 14,
       fontWeight: 'bold',
       fill: color,
-      stroke: 0x000000,
-      strokeThickness: 3,
+      stroke: { width: 3, color: 0x000000 },
       align: 'center',
     });
 
@@ -368,9 +367,9 @@ export class AgentSprite extends Container {
     this.statusIndicator.endFill();
 
     // Sound waves
-    this.statusIndicator.lineStyle(2, 0x3498DB);
-    this.statusIndicator.drawArc(0, -40, 12, Math.PI * 0.2, Math.PI * 0.8);
-    this.statusIndicator.drawArc(0, -40, 16, Math.PI * 0.15, Math.PI * 0.85);
+    this.statusIndicator.strokeStyle = { width: 2, color: 0x3498DB };
+    this.statusIndicator.arc(0, -40, 12, Math.PI * 0.2, Math.PI * 0.8);
+    this.statusIndicator.arc(0, -40, 16, Math.PI * 0.15, Math.PI * 0.85);
   }
 
   protected drawWorkingIndicator(): void {

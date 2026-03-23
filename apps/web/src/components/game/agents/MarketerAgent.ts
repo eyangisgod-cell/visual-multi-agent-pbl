@@ -41,6 +41,13 @@ export class MarketerAgent extends AgentSprite {
   }
 
   /**
+   * Get the accessory color for this agent
+   */
+  public getAccessoryColor(): number {
+    return MARKETER_CONFIG.accessoryColor;
+  }
+
+  /**
    * Create a megaphone for promotion
    */
   private createMegaphone(): Graphics {
