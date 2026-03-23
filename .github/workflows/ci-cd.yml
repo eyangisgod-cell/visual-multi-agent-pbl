@@ -71,15 +71,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      # 只检查修改的文件（快速）- MVP 阶段只警告不阻止
-      - name: TypeScript check (modified files)
+      # MVP 阶段：TypeScript 检查只警告不阻止（~2 分钟）
+      - name: TypeScript check (warning only)
         run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- '*.ts' '*.tsx' | xargs -r npx tsc --noEmit || true
-          else
-            # PR: 只检查修改的文件（MVP 阶段不阻止合并）
-            git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }} -- '*.ts' '*.tsx' | xargs -r npx tsc --noEmit || true
-          fi
+          echo "Running TypeScript check (MVP phase - warnings only)..."
+          npx tsc --noEmit 2>&1 | head -50 || {
+            echo ""
+            echo "⚠️ TypeScript errors found (not blocking in MVP phase)"
+            echo "Tip: Fix these in Phase 2 (stabilization)"
+          }
 
   web-lint:
     name: Web - ESLint
@@ -103,15 +103,15 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      # 只检查修改的文件（快速）- MVP 阶段只警告不阻止
-      - name: ESLint (modified files)
+      # MVP 阶段：ESLint 检查只警告不阻止（~1 分钟）
+      - name: ESLint check (warning only)
         run: |
-          if [ "${{ github.event_name }}" == "push" ]; then
-            git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- '*.ts' '*.tsx' | xargs -r npx eslint || true
-          else
-            # PR: 只检查修改的文件（MVP 阶段不阻止合并）
-            git diff --name-only origin/${{ github.base_ref }} ${{ github.sha }} -- '*.ts' '*.tsx' | xargs -r npx eslint || true
-          fi
+          echo "Running ESLint check (MVP phase - warnings only)..."
+          npm run lint 2>&1 | head -50 || {
+            echo ""
+            echo "⚠️ ESLint errors found (not blocking in MVP phase)"
+            echo "Tip: Run 'npm run lint:fix' to auto-fix"
+          }
 
   # =========================================
   # Standard Check (Core Files - Required for PR)
