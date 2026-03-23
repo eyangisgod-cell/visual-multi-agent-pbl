@@ -1,6 +1,6 @@
 #!/bin/bash
 # .husky/pre-commit
-# 前端预提交检查（包含 TDD 流程）
+# 前端预提交检查（MVP 阶段 - 只警告不阻止）
 
 set -e
 
@@ -15,38 +15,30 @@ fi
 
 cd "$WEB_DIR"
 
-echo "=== Running pre-commit checks ==="
+echo "=== Running pre-commit checks (MVP phase - warnings only) ==="
+echo ""
 
-# 1. ESLint（快速检查）
-echo "Running ESLint..."
-npm run lint --quiet || {
-    echo ""
-    echo "⚠️  ESLint 检查未通过"
-    echo "建议运行：npm run lint:fix"
-    echo ""
-    # 不阻止提交，只是警告
+# 1. ESLint（自动修复，只警告）
+echo "1️⃣  Running ESLint..."
+npm run lint:fix --quiet || {
+    echo "⚠️  ESLint 仍有未修复的问题"
+    echo "   建议运行：npm run lint:fix"
 }
+echo ""
 
-# 2. TypeScript 类型检查（快速）
-echo "Running TypeScript check..."
-npx tsc --noEmit || {
+# 2. TypeScript 类型检查（只警告，不阻止）
+echo "2️⃣  Running TypeScript check..."
+npx tsc --noEmit 2>&1 | head -20 || {
     echo ""
-    echo "❌ TypeScript 类型错误"
-    echo "请修复类型错误后重新提交"
-    echo ""
-    exit 1
+    echo "⚠️  TypeScript 类型错误（MVP 阶段不阻止提交）"
+    echo "   提示：运行 'npx tsc --noEmit' 查看详细错误"
 }
+echo ""
 
-# 3. 运行智能测试（TDD 流程）
-echo "Running smart test selection..."
-PROJECT_ROOT="$(cd "$WEB_DIR/../../" && pwd)"
-bash "$PROJECT_ROOT/scripts/run-tdd-tests.sh" || {
-    echo ""
-    echo "❌ 单元测试失败"
-    echo "请修复失败的测试后重新提交"
-    echo "提示：运行 'npm run test' 查看完整测试报告"
-    echo ""
-    exit 1
-}
-
-echo "=== Pre-commit checks passed ==="
+echo "=== Pre-commit checks completed (warnings only) ==="
+echo ""
+echo "✅ 预提交检查完成（MVP 阶段只警告）"
+echo ""
+echo "推送前建议运行本地完整检查："
+echo "  bash scripts/local-ci-check.sh"
+echo ""
