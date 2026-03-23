@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
-import { Button } from '../../../components/ui/button'
+import { Button } from '../../../componen../ui/Button'
 import { TaskBoard, type Task } from '../../../components/tasks/TaskBoard'
 import { AgentAssignment } from '../../../components/tasks/AgentAssignment'
 import { ProgressDashboard } from '../../../components/projects/ProgressDashboard'
