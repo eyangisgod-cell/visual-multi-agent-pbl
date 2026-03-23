@@ -96,43 +96,44 @@ export function useAgent(options: UseAgentOptions = {}): UseAgentReturn {
   useEffect(() => {
     if (!onStatusChange) return;
 
-    const unsubscribe = useAgentStore.subscribe(
-      (state) => state.agents,
-      (newAgents, prevAgents) => {
-        newAgents.forEach((agent, id) => {
-          const prevAgent = prevAgents.get(id);
-          if (prevAgent && prevAgent.status !== agent.status) {
-            onStatusChange(id, agent.status);
-          }
-        });
-      }
-    );
+    let prevAgents = new Map<string, import('../stores/agentStore').AgentInstance>()
 
-    return unsubscribe;
-  }, [onStatusChange]);
+    const unsubscribe = useAgentStore.subscribe((state) => {
+      const currentAgents = state.agents
+      currentAgents.forEach((agent, id) => {
+        const prevAgent = prevAgents.get(id)
+        if (prevAgent && prevAgent.status !== agent.status) {
+          onStatusChange(id, agent.status)
+        }
+      })
+      prevAgents = new Map(currentAgents)
+    })
+
+    return unsubscribe
+  }, [onStatusChange])
 
   // Subscribe to dialog completion
   useEffect(() => {
     if (!onDialogComplete) return;
 
-    const unsubscribe = useAgentStore.subscribe(
-      (state) =>
-        Array.from(state.agents.values()).map((a) => ({
-          id: a.id,
-          hasDialog: !!a.currentDialog,
-        })),
-      (newAgents, prevAgents) => {
-        newAgents.forEach((agent, index) => {
-          const prevAgent = prevAgents[index];
-          if (prevAgent?.hasDialog && !agent.hasDialog) {
-            onDialogComplete(agent.id);
-          }
-        });
-      }
-    );
+    let prevDialogState = new Map<string, boolean>()
 
-    return unsubscribe;
-  }, [onDialogComplete]);
+    const unsubscribe = useAgentStore.subscribe((state) => {
+      const currentAgents = state.agents
+      currentAgents.forEach((agent, id) => {
+        const hasDialog = !!agent.currentDialog
+        const prevHasDialog = prevDialogState.get(id)
+        if (prevHasDialog && !hasDialog) {
+          onDialogComplete(agent.id)
+        }
+      })
+      prevDialogState = new Map(
+        Array.from(currentAgents.entries()).map(([id, agent]) => [id, !!agent.currentDialog])
+      )
+    })
+
+    return unsubscribe
+  }, [onDialogComplete])
 
   // Auto-select first agent
   useEffect(() => {

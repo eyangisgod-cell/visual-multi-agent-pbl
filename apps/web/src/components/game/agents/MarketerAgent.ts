@@ -202,6 +202,13 @@ export class MarketerAgent extends AgentSprite {
     this.statusIndicator.lineStyle(3, 0xE91E63, 0.8);
     this.statusIndicator.arc(0, -40, 20, Math.PI * 0.1, Math.PI * 0.9);
   }
+
+  /**
+   * Get accessory color from parent config
+   */
+  protected getAccessoryColor(): number {
+    return MARKETER_CONFIG.accessoryColor;
+  }
 }
 
 export default MarketerAgent;

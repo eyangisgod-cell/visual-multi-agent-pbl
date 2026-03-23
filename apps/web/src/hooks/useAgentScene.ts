@@ -102,7 +102,7 @@ export function useAgentScene(config: AgentSceneConfig) {
       return;
     }
 
-    containerRef.current = container;
+    containerRef.current = container as HTMLDivElement;
 
     // Create PixiJS application
     const app = new Application();
@@ -221,7 +221,7 @@ export function useAgentScene(config: AgentSceneConfig) {
 
         const newAnimManager = new AgentAnimationManager(
           newSprite,
-          appRef.current.stage
+          appRef.current!.stage
         );
         animationManagersRef.current.set(agentId, newAnimManager);
       } else {

@@ -325,7 +325,7 @@ const AgentCard: React.FC<AgentCardProps> = ({
             text={agent.currentDialog}
             isVisible={showSpeechBubble}
             position="left"
-            variant={agent.status}
+            variant={agent.status === 'idle' ? 'default' : agent.status}
             agentName={config.name}
           />
         </div>

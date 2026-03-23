@@ -221,30 +221,36 @@ export function ProgressDashboard({
         {/* Agent Assignment Stats */}
         <div className="bg-white border border-gray-200 rounded-xl p-4">
           <h3 className="font-medium text-gray-900 mb-4">Agent Assignments</h3>
-          <div className="grid grid-cols-2 gap-3">
-            {Object.entries(AGENT_ICONS).map(([agentType, icon]) => {
-              const count = tasks.filter(t => t.agentType === agentType).length
-              const unassigned = tasks.filter(t => !t.agentType).length
+          {(() => {
+            const unassignedCount = tasks.filter(t => !t.agentType).length
+            return (
+              <>
+                <div className="grid grid-cols-2 gap-3">
+                  {Object.entries(AGENT_ICONS).map(([agentType, icon]) => {
+                    const count = tasks.filter(t => t.agentType === agentType).length
 
-              return (
-                <div
-                  key={agentType}
-                  className="bg-gray-50 rounded-lg p-3 flex items-center gap-3"
-                >
-                  <span className="text-2xl">{icon}</span>
-                  <div>
-                    <p className="text-lg font-semibold text-gray-900">{count}</p>
-                    <p className="text-xs text-gray-500 capitalize">{agentType}s</p>
-                  </div>
+                    return (
+                      <div
+                        key={agentType}
+                        className="bg-gray-50 rounded-lg p-3 flex items-center gap-3"
+                      >
+                        <span className="text-2xl">{icon}</span>
+                        <div>
+                          <p className="text-lg font-semibold text-gray-900">{count}</p>
+                          <p className="text-xs text-gray-500 capitalize">{agentType}s</p>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
-              )
-            })}
-          </div>
-          {unassigned > 0 && (
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              {unassigned} task{unassigned !== 1 ? 's' : ''} without agent assignment
-            </p>
-          )}
+                {unassignedCount > 0 && (
+                  <p className="text-xs text-gray-500 mt-3 text-center">
+                    {unassignedCount} task{unassignedCount !== 1 ? 's' : ''} without agent assignment
+                  </p>
+                )}
+              </>
+            )
+          })()}
         </div>
       </div>
 

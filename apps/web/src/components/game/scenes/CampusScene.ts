@@ -30,7 +30,7 @@ export class CampusScene {
   private config: CampusSceneConfig
   private sceneContainer: Container
   private groundLayer: Container
-  private objectLayer: Container
+  public objectLayer: Container
   private collisionLayer: Container
   private decorationsLayer: Container
 

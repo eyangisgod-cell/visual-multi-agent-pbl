@@ -207,8 +207,7 @@ export class AgentSprite extends Container {
       fontSize: 14,
       fontWeight: 'bold',
       fill: color,
-      stroke: 0x000000,
-      strokeThickness: 3,
+      stroke: { color: 0x000000, width: 3 },
       align: 'center',
     });
 
