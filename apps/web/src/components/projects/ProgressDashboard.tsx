@@ -224,7 +224,6 @@ export function ProgressDashboard({
           <div className="grid grid-cols-2 gap-3">
             {Object.entries(AGENT_ICONS).map(([agentType, icon]) => {
               const count = tasks.filter(t => t.agentType === agentType).length
-              const unassigned = tasks.filter(t => !t.agentType).length
 
               return (
                 <div
@@ -240,11 +239,14 @@ export function ProgressDashboard({
               )
             })}
           </div>
-          {unassigned > 0 && (
-            <p className="text-xs text-gray-500 mt-3 text-center">
-              {unassigned} task{unassigned !== 1 ? 's' : ''} without agent assignment
-            </p>
-          )}
+          {(() => {
+            const unassigned = tasks.filter(t => !t.agentType).length
+            return unassigned > 0 && (
+              <p className="text-xs text-gray-500 mt-3 text-center">
+                {unassigned} task{unassigned !== 1 ? 's' : ''} without agent assignment
+              </p>
+            )
+          })()}
         </div>
       </div>
 

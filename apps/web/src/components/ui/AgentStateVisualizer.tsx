@@ -10,7 +10,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-import { useAgentStore, AgentInstance } from '../stores/agentStore';
+import { useAgentStore, type AgentInstance } from '../../stores/agentStore';
 import { AgentType, AGENT_CONFIGS, AgentStatus } from '../game/agents';
 import SpeechBubble from './SpeechBubble';
 
@@ -142,7 +142,7 @@ const AgentStateVisualizer: React.FC<AgentStateVisualizerProps> = ({
         ],
       };
 
-      const agentDialogs = dialogs[agent.type];
+      const agentDialogs = dialogs[agent.type as keyof typeof dialogs];
       const randomDialog =
         agentDialogs[Math.floor(Math.random() * agentDialogs.length)];
 
@@ -212,7 +212,7 @@ const AgentCard: React.FC<AgentCardProps> = ({
   onSimulateDialog,
   compact,
 }) => {
-  const config = AGENT_CONFIGS[agent.type];
+  const config = AGENT_CONFIGS[agent.type as keyof typeof AGENT_CONFIGS];
   const [showSpeechBubble, setShowSpeechBubble] = React.useState(false);
 
   useEffect(() => {
@@ -253,13 +253,11 @@ const AgentCard: React.FC<AgentCardProps> = ({
         className={clsx(
           'flex h-10 w-10 items-center justify-center rounded-full text-white font-bold',
           compact ? 'h-8 w-8 text-sm' : '',
-          {
-            mentor: 'bg-purple-500',
-            designer: 'bg-orange-500',
-            analyst: 'bg-blue-500',
-            marketer: 'bg-pink-500',
-            assistant: 'bg-green-500',
-          }[agent.type]
+          agentColor.includes('purple') ? 'bg-purple-500' :
+          agentColor.includes('orange') ? 'bg-orange-500' :
+          agentColor.includes('blue') ? 'bg-blue-500' :
+          agentColor.includes('pink') ? 'bg-pink-500' :
+          'bg-green-500'
         )}
       >
         {config.name.charAt(0)}
@@ -279,7 +277,7 @@ const AgentCard: React.FC<AgentCardProps> = ({
             <span className="hidden sm:inline">
               {
                 { idle: '空闲', thinking: '思考', speaking: '发言', working: '工作' }[
-                  agent.status
+                  agent.status as AgentStatus
                 ]
               }
             </span>
@@ -325,7 +323,7 @@ const AgentCard: React.FC<AgentCardProps> = ({
             text={agent.currentDialog}
             isVisible={showSpeechBubble}
             position="left"
-            variant={agent.status}
+            variant={agent.status === 'idle' ? 'default' : agent.status}
             agentName={config.name}
           />
         </div>

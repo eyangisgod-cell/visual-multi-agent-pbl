@@ -136,7 +136,7 @@ export function useAgentScene(config: AgentSceneConfig) {
             toggleAgentSelection(agentId);
           };
 
-          sprite.onStatusChange = (newStatus) => {
+          sprite.onStatusChange = (agent, newStatus) => {
             updateAgentStatus(agentId, newStatus);
           };
 
@@ -212,7 +212,7 @@ export function useAgentScene(config: AgentSceneConfig) {
           toggleAgentSelection(agentId);
         };
 
-        newSprite.onStatusChange = (newStatus) => {
+        newSprite.onStatusChange = (agent, newStatus) => {
           updateAgentStatus(agentId, newStatus);
         };
 
@@ -221,7 +221,7 @@ export function useAgentScene(config: AgentSceneConfig) {
 
         const newAnimManager = new AgentAnimationManager(
           newSprite,
-          appRef.current?.stage
+          appRef.current!.stage
         );
         animationManagersRef.current.set(agentId, newAnimManager);
       } else {

@@ -301,6 +301,13 @@ export class CampusScene {
   }
 
   /**
+   * Get object layer for adding entities
+   */
+  getLayer(): Container {
+    return this.objectLayer
+  }
+
+  /**
    * Convert pixel coordinates to tile coordinates
    */
   pixelToTile(pixelX: number, pixelY: number): { tileX: number; tileY: number } {

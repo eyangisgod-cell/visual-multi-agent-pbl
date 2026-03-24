@@ -1,5 +1,5 @@
 import { Application, Container, Graphics, Texture, Sprite } from 'pixi.js'
-import { CampusScene } from './scenes/CampusScene'
+import { CampusScene } from './CampusScene'
 
 export type SceneName = 'campus' | 'building-interior' | 'courtyard'
 

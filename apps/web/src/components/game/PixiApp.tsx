@@ -43,11 +43,12 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
           resolution: window.devicePixelRatio || 1,
           autoDensity: true,
           antialias: false, // Disable for pixel art style
-          preference: 'webgl2',
         })
 
         // Mount to DOM
-        containerRef.current.appendChild(app.canvas as HTMLCanvasElement)
+        if (containerRef.current) {
+          containerRef.current.appendChild(app.canvas as HTMLCanvasElement)
+        }
 
         appRef.current = app
 
@@ -93,13 +94,13 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
   const preloadAssets = async () => {
     // Preload placeholder assets for pixel art
     // In production, these would be actual image files
-    Assets.add('player-idle', createPlaceholderTexture(32, 32, 0x00ff00))
-    Assets.add('player-walk-1', createPlaceholderTexture(32, 32, 0x00cc00))
-    Assets.add('player-walk-2', createPlaceholderTexture(32, 32, 0x00aa00))
-    Assets.add('ground-tile', createPlaceholderTexture(64, 64, 0x2d5016))
-    Assets.add('wall-tile', createPlaceholderTexture(64, 64, 0x8b4513))
-    Assets.add('tree', createPlaceholderTexture(48, 64, 0x228b22))
-    Assets.add('building', createPlaceholderTexture(128, 96, 0xcd853f))
+    Assets.add({ alias: 'player-idle', src: createPlaceholderTexture(32, 32, 0x00ff00) })
+    Assets.add({ alias: 'player-walk-1', src: createPlaceholderTexture(32, 32, 0x00cc00) })
+    Assets.add({ alias: 'player-walk-2', src: createPlaceholderTexture(32, 32, 0x00aa00) })
+    Assets.add({ alias: 'ground-tile', src: createPlaceholderTexture(64, 64, 0x2d5016) })
+    Assets.add({ alias: 'wall-tile', src: createPlaceholderTexture(64, 64, 0x8b4513) })
+    Assets.add({ alias: 'tree', src: createPlaceholderTexture(48, 64, 0x228b22) })
+    Assets.add({ alias: 'building', src: createPlaceholderTexture(128, 96, 0xcd853f) })
 
     await Assets.load([
       'player-idle',

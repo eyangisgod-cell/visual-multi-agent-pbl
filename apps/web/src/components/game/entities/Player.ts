@@ -1,5 +1,5 @@
 import { Application, Sprite, Container, Graphics, Assets } from 'pixi.js'
-import { CampusScene } from './scenes/CampusScene'
+import { CampusScene } from '../scenes/CampusScene'
 
 export interface PlayerConfig {
   speed: number
@@ -70,7 +70,7 @@ export class Player {
     this.setupDebugCollision()
 
     // Add to scene
-    this.scene.objectLayer.addChild(this.container)
+    this.scene.getLayer().addChild(this.container)
 
     // Set up keyboard input
     this.setupInput()

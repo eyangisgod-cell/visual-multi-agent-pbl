@@ -145,7 +145,7 @@ export class DesignerAgent extends AgentSprite {
     graphics.endFill();
 
     // Smock pockets
-    graphics.lineStyle(1, 0xC0392B);
+    graphics.strokeStyle = { width: 1, color: 0xC0392B };
     graphics.drawRect(-10, 20, 10, 12);
     graphics.drawRect(0, 20, 10, 12);
 
