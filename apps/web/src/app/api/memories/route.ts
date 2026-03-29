@@ -15,10 +15,10 @@ const memoryCreateSchema = z.object({
 
 // Memory query schema
 const memoryQuerySchema = z.object({
-  agentId: z.string().optional(),
-  type: z.nativeEnum(MemoryType).optional(),
-  tag: z.string().optional(),
-  limit: z.string().transform((val) => parseInt(val, 10)).optional().default('50'),
+  agentId: z.string().nullish(),
+  type: z.enum(['SHORT_TERM', 'LONG_TERM', 'EPISODIC', 'PROCEDURAL', 'SEMANTIC']).nullish(),
+  tag: z.string().nullish(),
+  limit: z.coerce.number().min(1).max(100).default(50).catch(50),
 })
 
 export async function POST(request: NextRequest) {

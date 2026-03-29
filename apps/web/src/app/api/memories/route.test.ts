@@ -7,25 +7,26 @@
  * handle creation and querying of agent memories.
  */
 
-import { POST, GET } from './route'
 import { PrismaClient, MemoryType } from '@prisma/client'
 import { NextRequest } from 'next/server'
 
-// Mock Prisma
+// Mock Prisma - define before jest.mock
 const mockCreate = jest.fn()
 const mockFindMany = jest.fn()
 const mockDelete = jest.fn()
 
+const mockPrismaInstance = {
+  agentMemory: {
+    create: mockCreate,
+    findMany: mockFindMany,
+    delete: mockDelete,
+  },
+  $disconnect: jest.fn(),
+}
+
 jest.mock('@prisma/client', () => {
   return {
-    PrismaClient: jest.fn().mockImplementation(() => ({
-      agentMemory: {
-        create: mockCreate,
-        findMany: mockFindMany,
-        delete: mockDelete,
-      },
-      $disconnect: jest.fn(),
-    })),
+    PrismaClient: jest.fn().mockImplementation(() => mockPrismaInstance),
     MemoryType: {
       SHORT_TERM: 'SHORT_TERM',
       LONG_TERM: 'LONG_TERM',
@@ -35,6 +36,8 @@ jest.mock('@prisma/client', () => {
     },
   }
 })
+
+import { POST, GET } from './route'
 
 describe('Memories API', () => {
   beforeEach(() => {
@@ -66,8 +69,8 @@ describe('Memories API', () => {
       const data = await response.json()
 
       expect(response.status).toBe(201)
-      expect(data.id).toBe('memory-id-123')
-      expect(data.agentId).toBe(requestBody.agentId)
+      expect(data.memory.id).toBe('memory-id-123')
+      expect(data.memory.agentId).toBe(requestBody.agentId)
       expect(mockCreate).toHaveBeenCalledWith({
         data: requestBody,
       })
@@ -133,15 +136,24 @@ describe('Memories API', () => {
 
       mockFindMany.mockResolvedValue(mockMemories)
 
-      const request = new NextRequest('http://localhost:3000/api/memories?agentId=agent-123')
+      const url = new URL('http://localhost:3000/api/memories')
+      url.searchParams.set('agentId', 'agent-123')
+      url.searchParams.set('limit', '50')
+      const request = new NextRequest(url)
       const response = await GET(request)
       const data = await response.json()
+
+      // Debug: log error details
+      if (response.status !== 200) {
+        console.error('GET error:', data)
+      }
 
       expect(response.status).toBe(200)
       expect(data.memories).toHaveLength(2)
       expect(mockFindMany).toHaveBeenCalledWith({
         where: { agentId: 'agent-123' },
         orderBy: { importance: 'desc' },
+        take: 50,
       })
     })
 
@@ -160,7 +172,11 @@ describe('Memories API', () => {
 
       mockFindMany.mockResolvedValue(mockMemories)
 
-      const request = new NextRequest('http://localhost:3000/api/memories?agentId=agent-123&type=SHORT_TERM')
+      const url = new URL('http://localhost:3000/api/memories')
+      url.searchParams.set('agentId', 'agent-123')
+      url.searchParams.set('type', 'SHORT_TERM')
+      url.searchParams.set('limit', '50')
+      const request = new NextRequest(url)
       const response = await GET(request)
       const data = await response.json()
 
@@ -171,7 +187,10 @@ describe('Memories API', () => {
     it('should return empty array when no memories found', async () => {
       mockFindMany.mockResolvedValue([])
 
-      const request = new NextRequest('http://localhost:3000/api/memories?agentId=non-existent')
+      const url = new URL('http://localhost:3000/api/memories')
+      url.searchParams.set('agentId', 'non-existent')
+      url.searchParams.set('limit', '50')
+      const request = new NextRequest(url)
       const response = await GET(request)
       const data = await response.json()
 

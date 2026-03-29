@@ -15,7 +15,7 @@ enum Role {
 model User {
   id            String    @id @default(uuid()) @db.Uuid
   username      String?   @unique @db.VarChar(50)
-  passwordHash  String?   @map("password_hash\") @db.VarChar(255)
+  passwordHash  String?   @map("password_hash") @db.VarChar(255)
   nickname      String?   @db.VarChar(50)
   avatarUrl     String?   @map("avatar_url") @db.Text
   grade         Int?
@@ -30,7 +30,7 @@ model User {
   sessions      Session[]
   userAgents    UserAgent[]
   works         Work[]
-  assignedTasks ProjectTask[] @relation("AssignedTasks")
+  assignedTasks ProjectTask[] @relation("UserAssignedTasks")
 
   @@map("users")
 }
@@ -113,7 +113,7 @@ model ProjectTask {
   updatedAt      DateTime @updatedAt @map("updated_at")
 
   project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignedUser   User?    @relation(fields: [assignedTo], references: [id], onDelete: SetNull)
+  assignedUser   User?    @relation(fields: [assignedTo], references: [id], onDelete: SetNull, name: "UserAssignedTasks")
 
   @@map("project_tasks")
 }
@@ -178,4 +178,45 @@ model SceneTemplate {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("scene_templates")
+}
+
+enum MemoryType {
+  SHORT_TERM   // 短期记忆（24 小时）
+  LONG_TERM    // 长期记忆（永久）
+  EPISODIC     // 情景记忆（事件记录）
+  PROCEDURAL   // 程序记忆（技能）
+  SEMANTIC     // 语义记忆（知识）
+}
+
+enum EvolutionType {
+  PERSONALITY_UPDATE
+  SKILL_ACQUISITION
+  BEHAVIOR_ADJUSTMENT
+  KNOWLEDGE_EXPANSION
+  PREFERENCE_CHANGE
+}
+
+model AgentMemory {
+  id          String   @id @default(uuid())
+  agentId     String   @map("agent_id")
+  type        MemoryType
+  content     String   @db.Text
+  importance  Int      @default(1) @map("importance") // 重要性 1-10
+  tags        String[]
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("agent_memories")
+}
+
+model AgentEvolution {
+  id           String   @id @default(uuid())
+  agentId      String   @map("agent_id")
+  changeType   EvolutionType
+  description  String   @db.Text
+  beforeState  Json?    @map("before_state")
+  afterState   Json?    @map("after_state")
+  triggerEvent String?  @map("trigger_event")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@map("agent_evolution_logs")
 }

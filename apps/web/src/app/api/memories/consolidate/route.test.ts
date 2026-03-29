@@ -7,27 +7,28 @@
  * correctly converts short-term memories to long-term memories.
  */
 
-import { POST } from './route'
 import { PrismaClient, MemoryType } from '@prisma/client'
 import { NextRequest } from 'next/server'
 
-// Mock Prisma
+// Mock Prisma - define before jest.mock
 const mockFindMany = jest.fn()
 const mockCreate = jest.fn()
 const mockDelete = jest.fn()
 const mockUpdate = jest.fn()
 
+const mockPrismaInstance = {
+  agentMemory: {
+    findMany: mockFindMany,
+    create: mockCreate,
+    delete: mockDelete,
+    update: mockUpdate,
+  },
+  $disconnect: jest.fn(),
+}
+
 jest.mock('@prisma/client', () => {
   return {
-    PrismaClient: jest.fn().mockImplementation(() => ({
-      agentMemory: {
-        findMany: mockFindMany,
-        create: mockCreate,
-        delete: mockDelete,
-        update: mockUpdate,
-      },
-      $disconnect: jest.fn(),
-    })),
+    PrismaClient: jest.fn().mockImplementation(() => mockPrismaInstance),
     MemoryType: {
       SHORT_TERM: 'SHORT_TERM',
       LONG_TERM: 'LONG_TERM',
@@ -37,6 +38,8 @@ jest.mock('@prisma/client', () => {
     },
   }
 })
+
+import { POST } from './route'
 
 describe('Memories Consolidation API', () => {
   beforeEach(() => {
@@ -97,16 +100,9 @@ describe('Memories Consolidation API', () => {
     })
 
     it('should only consolidate memories above minimum importance', async () => {
+      // API filters by minImportance in the database query
+      // So mockFindMany should return only memories meeting criteria
       const shortTermMemories = [
-        {
-          id: 'st-1',
-          agentId: 'agent-123',
-          type: MemoryType.SHORT_TERM,
-          content: 'Low importance memory',
-          importance: 3,
-          tags: [],
-          createdAt: new Date(),
-        },
         {
           id: 'st-2',
           agentId: 'agent-123',

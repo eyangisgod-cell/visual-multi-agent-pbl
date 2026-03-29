@@ -7,21 +7,22 @@
  * searches for memories by similarity and filters.
  */
 
-import { POST } from './route'
 import { PrismaClient, MemoryType } from '@prisma/client'
 import { NextRequest } from 'next/server'
 
-// Mock Prisma
+// Mock Prisma - define before jest.mock
 const mockFindMany = jest.fn()
+
+const mockPrismaInstance = {
+  agentMemory: {
+    findMany: mockFindMany,
+  },
+  $disconnect: jest.fn(),
+}
 
 jest.mock('@prisma/client', () => {
   return {
-    PrismaClient: jest.fn().mockImplementation(() => ({
-      agentMemory: {
-        findMany: mockFindMany,
-      },
-      $disconnect: jest.fn(),
-    })),
+    PrismaClient: jest.fn().mockImplementation(() => mockPrismaInstance),
     MemoryType: {
       SHORT_TERM: 'SHORT_TERM',
       LONG_TERM: 'LONG_TERM',
@@ -31,6 +32,8 @@ jest.mock('@prisma/client', () => {
     },
   }
 })
+
+import { POST } from './route'
 
 describe('Memories Query API', () => {
   beforeEach(() => {
