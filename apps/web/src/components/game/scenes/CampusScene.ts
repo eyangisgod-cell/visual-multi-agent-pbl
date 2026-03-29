@@ -30,7 +30,7 @@ export class CampusScene {
   private config: CampusSceneConfig
   private sceneContainer: Container
   private groundLayer: Container
-  private objectLayer: Container
+  public objectLayer: Container
   private collisionLayer: Container
   private decorationsLayer: Container
 
@@ -298,6 +298,13 @@ export class CampusScene {
       x: (this.CAMPUS_WIDTH / 2) * this.TILE_SIZE,
       y: (this.CAMPUS_HEIGHT / 2) * this.TILE_SIZE,
     }
+  }
+
+  /**
+   * Get object layer for adding entities
+   */
+  getLayer(): Container {
+    return this.objectLayer
   }
 
   /**

@@ -10,7 +10,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx } from 'clsx';
-import { useAgentStore, AgentInstance } from '../stores/agentStore';
+import { useAgentStore, AgentInstance } from '../../stores/agentStore';
 import { AgentType, AGENT_CONFIGS, AgentStatus } from '../game/agents';
 import SpeechBubble from './SpeechBubble';
 
@@ -325,7 +325,7 @@ const AgentCard: React.FC<AgentCardProps> = ({
             text={agent.currentDialog}
             isVisible={showSpeechBubble}
             position="left"
-            variant={agent.status}
+            variant={agent.status === 'idle' ? 'default' : agent.status}
             agentName={config.name}
           />
         </div>

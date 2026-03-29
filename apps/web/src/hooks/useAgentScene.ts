@@ -19,7 +19,7 @@ import {
   MarketerAgent,
   AssistantAgent,
   AgentType,
-} from '../game/agents';
+} from '../components/game/agents';
 
 export interface AgentSceneConfig {
   canvasId: string;
@@ -96,13 +96,13 @@ export function useAgentScene(config: AgentSceneConfig) {
    * Initialize PixiJS application and agent sprites
    */
   useEffect(() => {
-    const container = document.getElementById(config.canvasId);
+    const container = document.getElementById(config.canvasId) as HTMLDivElement | null;
     if (!container) {
       console.error(`Canvas container #${config.canvasId} not found`);
       return;
     }
 
-    containerRef.current = container;
+    containerRef.current = container as HTMLDivElement;
 
     // Create PixiJS application
     const app = new Application();
@@ -136,7 +136,7 @@ export function useAgentScene(config: AgentSceneConfig) {
             toggleAgentSelection(agentId);
           };
 
-          sprite.onStatusChange = (_, newStatus) => {
+          sprite.onStatusChange = (agent, newStatus) => {
             updateAgentStatus(agentId, newStatus);
           };
 
@@ -212,7 +212,7 @@ export function useAgentScene(config: AgentSceneConfig) {
           toggleAgentSelection(agentId);
         };
 
-        newSprite.onStatusChange = (_, newStatus) => {
+        newSprite.onStatusChange = (agent, newStatus) => {
           updateAgentStatus(agentId, newStatus);
         };
 
@@ -221,7 +221,7 @@ export function useAgentScene(config: AgentSceneConfig) {
 
         const newAnimManager = new AgentAnimationManager(
           newSprite,
-          appRef.current.stage
+          appRef.current!.stage
         );
         animationManagersRef.current.set(agentId, newAnimManager);
       } else {

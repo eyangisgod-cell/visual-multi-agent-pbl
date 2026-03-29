@@ -62,8 +62,8 @@ export class MarketerAgent extends AgentSprite {
 
     // Sound waves (decorative)
     graphics.lineStyle(2, this.getAccessoryColor(), 0.6);
-    graphics.drawArc(42, 35, 8, -Math.PI * 0.3, Math.PI * 0.3);
-    graphics.drawArc(42, 35, 12, -Math.PI * 0.2, Math.PI * 0.2);
+    graphics.arc(42, 35, 8, -Math.PI * 0.3, Math.PI * 0.3);
+    graphics.arc(42, 35, 12, -Math.PI * 0.2, Math.PI * 0.2);
 
     return graphics;
   }
@@ -200,7 +200,14 @@ export class MarketerAgent extends AgentSprite {
 
     // Add bigger sound waves for marketer
     this.statusIndicator.lineStyle(3, 0xE91E63, 0.8);
-    this.statusIndicator.drawArc(0, -40, 20, Math.PI * 0.1, Math.PI * 0.9);
+    this.statusIndicator.arc(0, -40, 20, Math.PI * 0.1, Math.PI * 0.9);
+  }
+
+  /**
+   * Get accessory color from parent config
+   */
+  protected getAccessoryColor(): number {
+    return MARKETER_CONFIG.accessoryColor;
   }
 }
 
