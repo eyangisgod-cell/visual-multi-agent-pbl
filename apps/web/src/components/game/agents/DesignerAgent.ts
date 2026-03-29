@@ -39,13 +39,6 @@ export class DesignerAgent extends AgentSprite {
   }
 
   /**
-   * Get the accessory color for this agent
-   */
-  public getAccessoryColor(): number {
-    return DESIGNER_CONFIG.accessoryColor;
-  }
-
-  /**
    * Create a stylish beret
    */
   private createBeret(): Graphics {
@@ -145,7 +138,7 @@ export class DesignerAgent extends AgentSprite {
     graphics.endFill();
 
     // Smock pockets
-    graphics.strokeStyle = { width: 1, color: 0xC0392B };
+    graphics.lineStyle(1, 0xC0392B);
     graphics.drawRect(-10, 20, 10, 12);
     graphics.drawRect(0, 20, 10, 12);
 
