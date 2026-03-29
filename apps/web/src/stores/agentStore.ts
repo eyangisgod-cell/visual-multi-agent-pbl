@@ -6,7 +6,7 @@
  */
 
 import { create } from 'zustand';
-import { AgentType, AgentStatus } from '../game/agents';
+import { AgentType, AgentStatus } from '../components/game/agents';
 
 export interface AgentInstance {
   id: string;

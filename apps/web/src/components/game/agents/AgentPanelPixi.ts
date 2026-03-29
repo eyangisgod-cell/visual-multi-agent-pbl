@@ -12,7 +12,21 @@ import {
   TextStyle,
   FederatedPointerEvent,
 } from 'pixi.js';
-import { AgentType, AGENT_CONFIGS, AgentSprite, AgentStatus } from '../game/agents';
+import { AgentType, AGENT_CONFIGS, AgentSprite, AgentStatus } from './index';
+
+// Extended container to store agent card data
+interface AgentCardContainer extends Container {
+  agentCardData?: {
+    bg: Graphics;
+    selectionIndicator: Graphics;
+    checkmark: Graphics;
+    statusDot: Graphics;
+    statusLabel: Text;
+    agentType: AgentType;
+    isSelected: boolean;
+    status: AgentStatus;
+  };
+}
 
 export interface AgentPanelOptions {
   x: number;
@@ -339,13 +353,16 @@ export class AgentPanelPixi extends Container {
     container.addChild(descLabel);
 
     // Store references for updates
-    container.userData = {
+    const cardContainer = container as AgentCardContainer;
+    cardContainer.agentCardData = {
       bg,
       selectionIndicator,
       checkmark,
       statusDot,
       statusLabel,
       agentType,
+      isSelected: false,
+      status: 'idle',
     };
 
     // Setup interactivity
@@ -353,13 +370,15 @@ export class AgentPanelPixi extends Container {
     container.cursor = 'pointer';
 
     container.on('pointerenter', () => {
-      if (!container.userData.isSelected) {
+      const cardContainer = container as AgentCardContainer;
+      if (!cardContainer.agentCardData?.isSelected) {
         bg.alpha = 0.8;
       }
     });
 
     container.on('pointerleave', () => {
-      if (!container.userData.isSelected) {
+      const cardContainer = container as AgentCardContainer;
+      if (!cardContainer.agentCardData?.isSelected) {
         bg.alpha = 0.5;
       }
     });
@@ -467,8 +486,11 @@ export class AgentPanelPixi extends Container {
 
     // Find the card container
     this.cardsContainer.children.forEach((child) => {
-      if (child.userData?.agentType === agentType) {
-        const { bg, selectionIndicator, checkmark } = child.userData;
+      const cardContainer = child as AgentCardContainer;
+      if (cardContainer.agentCardData?.agentType === agentType) {
+        const cardDataRef = cardContainer.agentCardData;
+        if (!cardDataRef) return;
+        const { bg, selectionIndicator, checkmark } = cardDataRef;
 
         if (cardData.isSelected) {
           bg.alpha = 1;
@@ -494,8 +516,11 @@ export class AgentPanelPixi extends Container {
 
     // Update visual
     this.cardsContainer.children.forEach((child) => {
-      if (child.userData?.agentType === agentType) {
-        const { statusDot, statusLabel } = child.userData;
+      const cardContainer = child as AgentCardContainer;
+      if (cardContainer.agentCardData?.agentType === agentType) {
+        const cardDataRef = cardContainer.agentCardData;
+        if (!cardDataRef) return;
+        const { statusDot, statusLabel } = cardDataRef;
         statusDot.clear();
         statusDot.beginFill(this.getStatusColor(status));
         statusDot.drawCircle(76, 66, 6);

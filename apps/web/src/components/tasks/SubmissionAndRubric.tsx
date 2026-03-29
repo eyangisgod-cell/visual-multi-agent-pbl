@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Button } from '../ui/button'
+import { Button } from '../ui/Button'
 import { clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -187,13 +187,13 @@ export function SubmissionAndRubric({
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600 mb-1">Total Score</p>
-                  <p className={cn('text-3xl font-bold', getScoreColor(scorePercentage)}>
+                  <p className={cn('text-3xl font-bold', getScoreColor(scorePercentage))}>
                     {totalScore} / {maxPossibleScore}
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-600 mb-1">Percentage</p>
-                  <p className={cn('text-3xl font-bold', getScoreColor(scorePercentage)}>
+                  <p className={cn('text-3xl font-bold', getScoreColor(scorePercentage))}>
                     {scorePercentage.toFixed(1)}%
                   </p>
                 </div>

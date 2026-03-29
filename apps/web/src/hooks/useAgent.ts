@@ -7,7 +7,7 @@
 
 import { useCallback, useEffect } from 'react';
 import { useAgentStore } from '../stores/agentStore';
-import { AgentType, AgentStatus } from '../game/agents';
+import { AgentType, AgentStatus } from '../components/game/agents';
 
 export interface UseAgentOptions {
   autoSelect?: boolean;
@@ -97,13 +97,19 @@ export function useAgent(options: UseAgentOptions = {}): UseAgentReturn {
     if (!onStatusChange) return;
 
     const unsubscribe = useAgentStore.subscribe(
-      (state) => state.agents,
-      (newAgents, prevAgents) => {
-        newAgents.forEach((agent, id) => {
-          const prevAgent = prevAgents.get(id);
-          if (prevAgent && prevAgent.status !== agent.status) {
+      (state) => {
+        const agents = state.agents;
+        agents.forEach((agent, id) => {
+          // Store previous status in a ref for comparison
+          const prevStatus = (window as any).__agentPrevStatus?.get(id);
+          if (prevStatus && prevStatus !== agent.status) {
             onStatusChange(id, agent.status);
           }
+          // Update stored status
+          if (!(window as any).__agentPrevStatus) {
+            (window as any).__agentPrevStatus = new Map();
+          }
+          (window as any).__agentPrevStatus.set(id, agent.status);
         });
       }
     );
@@ -116,17 +122,18 @@ export function useAgent(options: UseAgentOptions = {}): UseAgentReturn {
     if (!onDialogComplete) return;
 
     const unsubscribe = useAgentStore.subscribe(
-      (state) =>
-        Array.from(state.agents.values()).map((a) => ({
-          id: a.id,
-          hasDialog: !!a.currentDialog,
-        })),
-      (newAgents, prevAgents) => {
-        newAgents.forEach((agent, index) => {
-          const prevAgent = prevAgents[index];
-          if (prevAgent?.hasDialog && !agent.hasDialog) {
+      (state) => {
+        const agents = Array.from(state.agents.values());
+        agents.forEach((agent) => {
+          const prevDialog = (window as any).__agentPrevDialog?.get(agent.id);
+          if (prevDialog && !agent.currentDialog) {
             onDialogComplete(agent.id);
           }
+          // Update stored dialog state
+          if (!(window as any).__agentPrevDialog) {
+            (window as any).__agentPrevDialog = new Map();
+          }
+          (window as any).__agentPrevDialog.set(agent.id, agent.currentDialog);
         });
       }
     );
