@@ -43,12 +43,11 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
           resolution: window.devicePixelRatio || 1,
           autoDensity: true,
           antialias: false, // Disable for pixel art style
+          preference: 'webgl',
         })
 
         // Mount to DOM
-        if (containerRef.current) {
-          containerRef.current.appendChild(app.canvas as HTMLCanvasElement)
-        }
+        containerRef.current!.appendChild(app.canvas as HTMLCanvasElement)
 
         appRef.current = app
 
@@ -94,23 +93,21 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
   const preloadAssets = async () => {
     // Preload placeholder assets for pixel art
     // In production, these would be actual image files
-    Assets.add({ alias: 'player-idle', src: createPlaceholderTexture(32, 32, 0x00ff00) })
-    Assets.add({ alias: 'player-walk-1', src: createPlaceholderTexture(32, 32, 0x00cc00) })
-    Assets.add({ alias: 'player-walk-2', src: createPlaceholderTexture(32, 32, 0x00aa00) })
-    Assets.add({ alias: 'ground-tile', src: createPlaceholderTexture(64, 64, 0x2d5016) })
-    Assets.add({ alias: 'wall-tile', src: createPlaceholderTexture(64, 64, 0x8b4513) })
-    Assets.add({ alias: 'tree', src: createPlaceholderTexture(48, 64, 0x228b22) })
-    Assets.add({ alias: 'building', src: createPlaceholderTexture(128, 96, 0xcd853f) })
+    const assets = [
+      { alias: 'player-idle', src: createPlaceholderTexture(32, 32, 0x00ff00) },
+      { alias: 'player-walk-1', src: createPlaceholderTexture(32, 32, 0x00cc00) },
+      { alias: 'player-walk-2', src: createPlaceholderTexture(32, 32, 0x00aa00) },
+      { alias: 'ground-tile', src: createPlaceholderTexture(64, 64, 0x2d5016) },
+      { alias: 'wall-tile', src: createPlaceholderTexture(64, 64, 0x8b4513) },
+      { alias: 'tree', src: createPlaceholderTexture(48, 64, 0x228b22) },
+      { alias: 'building', src: createPlaceholderTexture(128, 96, 0xcd853f) },
+    ]
 
-    await Assets.load([
-      'player-idle',
-      'player-walk-1',
-      'player-walk-2',
-      'ground-tile',
-      'wall-tile',
-      'tree',
-      'building',
-    ])
+    assets.forEach(asset => {
+      Assets.add({ alias: asset.alias, src: asset.src })
+    })
+
+    await Assets.load(assets.map(a => a.alias))
   }
 
   const createPlaceholderTexture = (w: number, h: number, color: number): string => {

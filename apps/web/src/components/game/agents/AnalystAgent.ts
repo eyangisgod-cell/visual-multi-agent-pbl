@@ -48,7 +48,7 @@ export class AnalystAgent extends AgentSprite {
     const graphics = new Graphics();
 
     // Headband
-    graphics.strokeStyle = { width: 4, color: 0x2C3E50 };
+    graphics.lineStyle(4, 0x2C3E50);
     graphics.arc(0, -40, 25, Math.PI, 0);
 
     // Left ear cup
@@ -62,7 +62,7 @@ export class AnalystAgent extends AgentSprite {
     graphics.endFill();
 
     // Microphone boom
-    graphics.strokeStyle = { width: 2, color: 0x2C3E50 };
+    graphics.lineStyle(2, 0x2C3E50);
     graphics.arc(-25, -25, 8, 0, Math.PI * 0.5);
 
     // Mic

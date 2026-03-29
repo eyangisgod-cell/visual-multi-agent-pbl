@@ -96,50 +96,44 @@ export function useAgent(options: UseAgentOptions = {}): UseAgentReturn {
   useEffect(() => {
     if (!onStatusChange) return;
 
-    const unsubscribe = useAgentStore.subscribe(
-      (state) => {
-        const agents = state.agents;
-        agents.forEach((agent, id) => {
-          // Store previous status in a ref for comparison
-          const prevStatus = (window as any).__agentPrevStatus?.get(id);
-          if (prevStatus && prevStatus !== agent.status) {
-            onStatusChange(id, agent.status);
-          }
-          // Update stored status
-          if (!(window as any).__agentPrevStatus) {
-            (window as any).__agentPrevStatus = new Map();
-          }
-          (window as any).__agentPrevStatus.set(id, agent.status);
-        });
-      }
-    );
+    let prevAgents = new Map<string, import('../stores/agentStore').AgentInstance>()
 
-    return unsubscribe;
-  }, [onStatusChange]);
+    const unsubscribe = useAgentStore.subscribe((state) => {
+      const currentAgents = state.agents
+      currentAgents.forEach((agent, id) => {
+        const prevAgent = prevAgents.get(id)
+        if (prevAgent && prevAgent.status !== agent.status) {
+          onStatusChange(id, agent.status)
+        }
+      })
+      prevAgents = new Map(currentAgents)
+    })
+
+    return unsubscribe
+  }, [onStatusChange])
 
   // Subscribe to dialog completion
   useEffect(() => {
     if (!onDialogComplete) return;
 
-    const unsubscribe = useAgentStore.subscribe(
-      (state) => {
-        const agents = Array.from(state.agents.values());
-        agents.forEach((agent) => {
-          const prevDialog = (window as any).__agentPrevDialog?.get(agent.id);
-          if (prevDialog && !agent.currentDialog) {
-            onDialogComplete(agent.id);
-          }
-          // Update stored dialog state
-          if (!(window as any).__agentPrevDialog) {
-            (window as any).__agentPrevDialog = new Map();
-          }
-          (window as any).__agentPrevDialog.set(agent.id, agent.currentDialog);
-        });
-      }
-    );
+    let prevDialogState = new Map<string, boolean>()
 
-    return unsubscribe;
-  }, [onDialogComplete]);
+    const unsubscribe = useAgentStore.subscribe((state) => {
+      const currentAgents = state.agents
+      currentAgents.forEach((agent, id) => {
+        const hasDialog = !!agent.currentDialog
+        const prevHasDialog = prevDialogState.get(id)
+        if (prevHasDialog && !hasDialog) {
+          onDialogComplete(agent.id)
+        }
+      })
+      prevDialogState = new Map(
+        Array.from(currentAgents.entries()).map(([id, agent]) => [id, !!agent.currentDialog])
+      )
+    })
+
+    return unsubscribe
+  }, [onDialogComplete])
 
   // Auto-select first agent
   useEffect(() => {

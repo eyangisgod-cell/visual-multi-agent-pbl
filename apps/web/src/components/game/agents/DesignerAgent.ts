@@ -169,6 +169,13 @@ export class DesignerAgent extends AgentSprite {
     this.statusIndicator.moveTo(15, -45);
     this.statusIndicator.lineTo(12, -42);
   }
+
+  /**
+   * Get accessory color from parent config
+   */
+  protected getAccessoryColor(): number {
+    return DESIGNER_CONFIG.accessoryColor;
+  }
 }
 
 export default DesignerAgent;

@@ -102,7 +102,7 @@ export function useAgentScene(config: AgentSceneConfig) {
       return;
     }
 
-    containerRef.current = container;
+    containerRef.current = container as HTMLDivElement;
 
     // Create PixiJS application
     const app = new Application();

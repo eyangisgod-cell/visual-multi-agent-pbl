@@ -227,7 +227,7 @@ export class AgentAnimationManager {
 
     for (let i = 0; i < waves; i++) {
       const graphics = new Graphics();
-      graphics.strokeStyle = { width: 2 - i * 0.5, color: 0x3498DB, alpha: 0.8 - i * 0.2 };
+      graphics.lineStyle(2 - i * 0.5, 0x3498DB, 0.8 - i * 0.2);
       graphics.arc(0, 0, 15 + i * 8, Math.PI * 0.3, Math.PI * 0.7);
       container.addChild(graphics);
     }

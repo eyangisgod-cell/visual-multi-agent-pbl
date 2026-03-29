@@ -41,13 +41,6 @@ export class MarketerAgent extends AgentSprite {
   }
 
   /**
-   * Get the accessory color for this agent
-   */
-  public getAccessoryColor(): number {
-    return MARKETER_CONFIG.accessoryColor;
-  }
-
-  /**
    * Create a megaphone for promotion
    */
   private createMegaphone(): Graphics {
@@ -68,7 +61,7 @@ export class MarketerAgent extends AgentSprite {
     graphics.endFill();
 
     // Sound waves (decorative)
-    graphics.strokeStyle = { width: 2, color: this.getAccessoryColor(), alpha: 0.6 };
+    graphics.lineStyle(2, this.getAccessoryColor(), 0.6);
     graphics.arc(42, 35, 8, -Math.PI * 0.3, Math.PI * 0.3);
     graphics.arc(42, 35, 12, -Math.PI * 0.2, Math.PI * 0.2);
 
@@ -206,8 +199,15 @@ export class MarketerAgent extends AgentSprite {
     super.drawSpeakingIndicator();
 
     // Add bigger sound waves for marketer
-    this.statusIndicator.strokeStyle = { width: 3, color: 0xE91E63, alpha: 0.8 };
+    this.statusIndicator.lineStyle(3, 0xE91E63, 0.8);
     this.statusIndicator.arc(0, -40, 20, Math.PI * 0.1, Math.PI * 0.9);
+  }
+
+  /**
+   * Get accessory color from parent config
+   */
+  protected getAccessoryColor(): number {
+    return MARKETER_CONFIG.accessoryColor;
   }
 }
 
