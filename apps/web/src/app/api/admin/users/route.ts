@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
     const role = searchParams.get('role');
 
     const skip = (page - 1) * limit;
-    const where = role ? { role } : {};
+    const where = role ? { role: { equals: role } } : {};
 
     const [users, total] = await Promise.all([
       prisma.user.findMany({

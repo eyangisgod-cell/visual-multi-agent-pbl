@@ -1,34 +1,36 @@
 /** @type {import('next').NextConfig} */
-const withPWA = require('next-pwa')({
-  dest: 'public',
-  disable: process.env.NODE_ENV === 'development',
-  register: true,
-  skipWaiting: true,
-  runtimeCaching: [
-    {
-      urlPattern: /^https?:\/\/api\/.*/i,
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'api-cache',
-        expiration: {
-          maxEntries: 100,
-          maxAgeSeconds: 60 * 60 * 24, // 24 小时
-        },
-      },
-    },
-    {
-      urlPattern: /^https?:\/\/.*\.(png|jpg|jpeg|svg|gif)$/i,
-      handler: 'CacheFirst',
-      options: {
-        cacheName: 'static-images',
-        expiration: {
-          maxEntries: 50,
-          maxAgeSeconds: 60 * 60 * 24 * 30, // 30 天
-        },
-      },
-    },
-  ],
-})
+// PWA temporarily disabled due to Windows compatibility issue with next-pwa
+// const withPWA = require('next-pwa')({
+//   dest: 'public',
+//   disable: process.env.NODE_ENV === 'development',
+//   register: true,
+//   skipWaiting: true,
+//   buildExcludes: [/middleware-(development|production)\.js$/],
+//   runtimeCaching: [
+//     {
+//       urlPattern: /^https?:\/\/api\/.*/i,
+//       handler: 'NetworkFirst',
+//       options: {
+//         cacheName: 'api-cache',
+//         expiration: {
+//           maxEntries: 100,
+//           maxAgeSeconds: 60 * 60 * 24,
+//         },
+//       },
+//     },
+//     {
+//       urlPattern: /^https?:\/\/.*\.(png|jpg|jpeg|svg|gif)$/i,
+//       handler: 'CacheFirst',
+//       options: {
+//         cacheName: 'static-images',
+//         expiration: {
+//           maxEntries: 50,
+//           maxAgeSeconds: 60 * 60 * 24 * 30,
+//         },
+//       },
+//     },
+//   ],
+// })
 
 const nextConfig = {
   reactStrictMode: true,
@@ -108,4 +110,4 @@ const nextConfig = {
   },
 }
 
-module.exports = withPWA(nextConfig)
+module.exports = nextConfig

@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
         gradeMax: data.gradeMax,
         subject: data.subject,
         difficulty: data.difficulty ?? 1,
-        rubricCriteria: data.rubricCriteria ? JSON.stringify(data.rubricCriteria) : null,
+        rubricCriteria: data.rubricCriteria ? JSON.stringify(data.rubricCriteria) : undefined,
         status: 'draft'
       },
       include: {
