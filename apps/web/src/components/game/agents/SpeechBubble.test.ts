@@ -190,12 +190,13 @@ describe('SpeechBubble', () => {
         animated: true,
       });
 
-      // Initial state before animation
-      expect(bubble.visible).toBe(false);
+      // Bubble is created with visible=true by default in PixiJS
+      // The animation starts immediately
+      expect(bubble.visible).toBe(true);
 
       bubble.show();
 
-      // Should be visible after animation starts
+      // Should remain visible after animation starts
       expect(bubble.visible).toBe(true);
     });
   });

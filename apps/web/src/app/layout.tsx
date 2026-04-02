@@ -1,4 +1,5 @@
-'use client'
+// Note: This is a Server Component (no 'use client' directive)
+// Client-side interactivity is provided by providers and components
 
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'

@@ -37,6 +37,7 @@ export class SpeechBubble extends Container {
   private options: Required<SpeechBubbleOptions>;
   private isVisible: boolean = false;
   private closeTimer?: NodeJS.Timeout;
+  private animationFrameId?: number;
 
   constructor(options: SpeechBubbleOptions) {
     super();
@@ -275,13 +276,14 @@ export class SpeechBubble extends Container {
       this.alpha = eased;
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        this.animationFrameId = requestAnimationFrame(animate);
       } else {
         this.isVisible = true;
+        this.animationFrameId = undefined;
       }
     };
 
-    requestAnimationFrame(animate);
+    this.animationFrameId = requestAnimationFrame(animate);
   }
 
   /**
@@ -301,14 +303,15 @@ export class SpeechBubble extends Container {
       this.alpha = eased;
 
       if (progress < 1) {
-        requestAnimationFrame(animate);
+        this.animationFrameId = requestAnimationFrame(animate);
       } else {
         this.visible = false;
         this.isVisible = false;
+        this.animationFrameId = undefined;
       }
     };
 
-    requestAnimationFrame(animate);
+    this.animationFrameId = requestAnimationFrame(animate);
   }
 
   /**
@@ -353,6 +356,9 @@ export class SpeechBubble extends Container {
   public destroy(): void {
     if (this.closeTimer) {
       clearTimeout(this.closeTimer);
+    }
+    if (this.animationFrameId) {
+      cancelAnimationFrame(this.animationFrameId);
     }
     super.destroy({ children: true });
   }
