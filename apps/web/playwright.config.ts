@@ -73,5 +73,9 @@ export default defineConfig({
     command: 'npm run dev',
     url: 'http://localhost:3000',
     timeout: 120 * 1000,
+    reuseExistingServer: !process.env.CI,
   },
+
+  /* Exclude API tests from Playwright - they are Jest tests */
+  testIgnore: ['**/tests/api/**'],
 });
