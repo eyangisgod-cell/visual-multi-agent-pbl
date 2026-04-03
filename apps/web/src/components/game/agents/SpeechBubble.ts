@@ -126,15 +126,12 @@ export class SpeechBubble extends Container {
     const { backgroundColor, borderRadius } = this.options;
 
     // Main bubble background
-    this.bubble.beginFill(backgroundColor, 0.95);
     this.bubble.lineStyle(2, 0x333333, 0.5);
     this.bubble.drawRoundedRect(0, 0, width, height, borderRadius);
-    this.bubble.endFill();
+    this.bubble.fill({ color: backgroundColor, alpha: 0.95 });
 
     // Subtle gradient overlay
-    this.bubble.beginFill(0xFFFFFF, 0.1);
-    this.bubble.drawRoundedRect(4, 4, width - 8, height / 3, borderRadius / 2);
-    this.bubble.endFill();
+    this.bubble.fill({ color: 0xFFFFFF, alpha: 0.1 }, { x: 4, y: 4, width: width - 8, height: height / 3, radius: borderRadius / 2 });
   }
 
   /**
@@ -146,7 +143,6 @@ export class SpeechBubble extends Container {
     const tailSize = 10;
     const tailColor = this.options.backgroundColor;
 
-    this.tail.beginFill(tailColor, 0.95);
     this.tail.lineStyle(2, 0x333333, 0.5);
 
     switch (this.options.position) {
@@ -180,7 +176,7 @@ export class SpeechBubble extends Container {
     }
 
     this.tail.closePath();
-    this.tail.endFill();
+    this.tail.fill({ color: tailColor, alpha: 0.95 });
 
     // Position tail based on bubble position
     this.positionTail(bubbleWidth, bubbleHeight);
