@@ -5,12 +5,12 @@ const prisma = new PrismaClient()
 
 export async function GET() {
   try {
-    // Fetch counts from database
+    // Fetch counts from database with error handling for missing tables
     const [totalProjects, totalUsers, totalAgents, activeLlmConfigs] = await Promise.all([
-      prisma.project.count(),
-      prisma.user.count(),
-      prisma.agent.count(),
-      prisma.llmConfig.count({ where: { isActive: true } }),
+      prisma.project.count().catch(() => 0),
+      prisma.user.count().catch(() => 0),
+      prisma.agent.count().catch(() => 0),
+      prisma.llmConfig.count({ where: { isActive: true } }).catch(() => 0),
     ])
 
     return NextResponse.json({
