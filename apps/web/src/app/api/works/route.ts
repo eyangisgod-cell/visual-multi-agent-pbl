@@ -1,34 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PrismaClient } from '@prisma/client'
+import { z } from 'zod'
 
 const prisma = new PrismaClient()
 
+// Work creation schema
+const workCreateSchema = z.object({
+  title: z.string().min(1).max(255),
+  description: z.string().max(5000).optional(),
+  content: z.string().max(50000).optional(),
+  coverImageUrl: z.string().url().optional(),
+  projectId: z.string().uuid(),
+  status: z.enum(['draft', 'published', 'submitted']).optional().default('published')
+})
+
 /**
- * GET /api/works - 作品列表（学生端）
- * Query params:
- * - projectId: filter by project ID
- * - status: filter by status (published, draft, etc.)
- * - limit: max results (default 50)
+ * POST /api/works - 创建作品（学生端）
  */
-export async function GET(request: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams
-    const projectId = searchParams.get('projectId')
-    const status = searchParams.get('status')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const body = await request.json()
 
-    const where: Record<string, unknown> = {}
-
-    if (projectId) {
-      where.projectId = projectId
+    // Validate request body
+    const validationResult = workCreateSchema.safeParse(body)
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: validationResult.error.errors },
+        { status: 400 }
+      )
     }
 
-    if (status) {
-      where.status = status
-    }
+    const data = validationResult.data
 
-    const works = await prisma.work.findMany({
-      where,
+    // TODO: Get user ID from session/token
+    // For now, use a placeholder - in production, extract from auth token
+    const userId = '00000000-0000-0000-0000-000000000001' // Placeholder
+
+    const work = await prisma.work.create({
+      data: {
+        title: data.title,
+        description: data.description,
+        content: data.content,
+        coverImageUrl: data.coverImageUrl,
+        projectId: data.projectId,
+        userId,
+        status: data.status
+      },
       include: {
         user: {
           select: {
@@ -45,16 +62,14 @@ export async function GET(request: NextRequest) {
             subject: true
           }
         }
-      },
-      orderBy: { createdAt: 'desc' },
-      take: limit
+      }
     })
 
-    return NextResponse.json({ works })
+    return NextResponse.json({ work }, { status: 201 })
   } catch (error) {
-    console.error('Error fetching works:', error)
+    console.error('Error creating work:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch works' },
+      { error: 'Failed to create work' },
       { status: 500 }
     )
   }

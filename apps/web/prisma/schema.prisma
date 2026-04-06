@@ -230,3 +230,23 @@ model AgentEvolution {
   @@index([evolutionType], map: "idx_agent_evolution_type")
   @@map("agent_evolution")
 }
+
+model AuditLog {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action      String    @db.VarChar(100)
+  entityType  String?   @map("entity_type") @db.VarChar(50)
+  entityId    String?   @map("entity_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  username    String?   @map("username") @db.VarChar(50)
+  metadata    Json?     @map("metadata")
+  ipAddress   String?   @map("ip_address") @db.VarChar(45)
+  userAgent   String?   @map("user_agent") @db.VarChar(500)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([action], map: "idx_audit_logs_action")
+  @@index([entityType], map: "idx_audit_logs_entity_type")
+  @@index([entityId], map: "idx_audit_logs_entity_id")
+  @@index([userId], map: "idx_audit_logs_user_id")
+  @@index([createdAt], map: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}
