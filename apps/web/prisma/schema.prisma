@@ -191,3 +191,42 @@ enum EvolutionType {
   KNOWLEDGE_EXPANSION
   PREFERENCE_CHANGE
 }
+
+model AgentMemory {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId     String    @map("agent_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  type        MemoryType @map("type")
+  content     String    @db.Text
+  embedding   Json?     @map("embedding")
+  importance  Int?      @default(1) @map("importance")
+  tags        String[]  @map("tags")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(6)
+  consolidated Boolean   @default(false) @map("consolidated")
+
+  @@index([agentId], map: "idx_agent_memories_agent_id")
+  @@index([userId], map: "idx_agent_memories_user_id")
+  @@index([type], map: "idx_agent_memories_type")
+  @@index([consolidated], map: "idx_agent_memories_consolidated")
+  @@map("agent_memories")
+}
+
+model AgentEvolution {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId       String         @map("agent_id") @db.Uuid
+  userId        String?        @map("user_id") @db.Uuid
+  evolutionType EvolutionType  @map("evolution_type")
+  description   String         @db.Text
+  beforeState   Json?          @map("before_state")
+  afterState    Json?          @map("after_state")
+  triggerEvent  String?        @map("trigger_event") @db.Text
+  metadata      Json?          @map("metadata")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([agentId], map: "idx_agent_evolution_agent_id")
+  @@index([userId], map: "idx_agent_evolution_user_id")
+  @@index([evolutionType], map: "idx_agent_evolution_type")
+  @@map("agent_evolution")
+}
