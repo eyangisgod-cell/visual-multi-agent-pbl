@@ -30,8 +30,8 @@ export async function GET(request: NextRequest) {
         username: true,
         nickname: true,
         grade: true,
-        invitationCode: true,
-        createdAt: true
+        invitation_code: true,
+        created_at: true
       }
     })
 
@@ -42,7 +42,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json({ user })
+    // Map database field names to camelCase for API response
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        nickname: user.nickname,
+        grade: user.grade,
+        invitationCode: user.invitation_code,
+        createdAt: user.created_at
+      }
+    })
   } catch (error) {
     console.error('Auth check error:', error)
     return NextResponse.json(

@@ -63,8 +63,9 @@ export class Player {
 
     // Set initial position
     const spawnPos = this.scene.getSpawnPosition()
-    this.container.x = spawnPos.x
-    this.container.y = spawnPos.y
+
+    // PixiJS 8.x: Use position.set() for setting position
+    this.container.position.set(spawnPos.x, spawnPos.y)
 
     // Set up debug collision (optional, for development)
     this.setupDebugCollision()
@@ -75,7 +76,7 @@ export class Player {
     // Set up keyboard input
     this.setupInput()
 
-    console.log('Player created at', spawnPos.x, spawnPos.y)
+    console.log('Player created at', spawnPos.x, spawnPos.y, 'Container position:', this.container.position)
   }
 
   /**
@@ -200,20 +201,22 @@ export class Player {
     const moveY = this.velocity.y * this.config.speed * dt
 
     // Calculate new position
-    const newX = this.container.x + moveX
-    const newY = this.container.y + moveY
+    let newX = this.container.position.x + moveX
+    let newY = this.container.position.y + moveY
 
     // Check collision with scene boundaries
     const sceneBounds = this.scene.getDimensions()
 
     // Check X-axis movement with collision
-    if (!this.checkCollisionAtPosition(newX, this.container.y)) {
-      this.container.x = this.clampToBounds(newX, this.WIDTH, sceneBounds.width)
+    if (!this.checkCollisionAtPosition(newX, this.container.position.y)) {
+      newX = this.clampToBounds(newX, this.WIDTH, sceneBounds.width)
+      this.container.position.x = newX
     }
 
     // Check Y-axis movement with collision
-    if (!this.checkCollisionAtPosition(this.container.x, newY)) {
-      this.container.y = this.clampToBounds(newY, this.HEIGHT, sceneBounds.height)
+    if (!this.checkCollisionAtPosition(this.container.position.x, newY)) {
+      newY = this.clampToBounds(newY, this.HEIGHT, sceneBounds.height)
+      this.container.position.y = newY
     }
   }
 
@@ -282,15 +285,14 @@ export class Player {
    * Get current player position
    */
   getPosition(): { x: number; y: number } {
-    return { x: this.container.x, y: this.container.y }
+    return { x: this.container.position.x, y: this.container.position.y }
   }
 
   /**
    * Set player position (for teleportation/scene transitions)
    */
   setPosition(x: number, y: number): void {
-    this.container.x = x
-    this.container.y = y
+    this.container.position.set(x, y)
   }
 
   /**

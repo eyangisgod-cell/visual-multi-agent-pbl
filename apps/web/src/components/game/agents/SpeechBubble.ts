@@ -128,10 +128,10 @@ export class SpeechBubble extends Container {
     // Main bubble background
     this.bubble.lineStyle(2, 0x333333, 0.5);
     this.bubble.drawRoundedRect(0, 0, width, height, borderRadius);
-    this.bubble.fill({ color: backgroundColor, alpha: 0.95 });
+    this.bubble.fill({ color: new Uint8Array([((backgroundColor >> 16) & 0xFF) / 255, ((backgroundColor >> 8) & 0xFF) / 255, (backgroundColor & 0xFF) / 255]), alpha: 0.95 });
 
     // Subtle gradient overlay
-    this.bubble.fill({ color: 0xFFFFFF, alpha: 0.1 }, { x: 4, y: 4, width: width - 8, height: height / 3, radius: borderRadius / 2 });
+    this.bubble.fill({ color: new Uint8Array([1, 1, 1]), alpha: 0.1 }, { x: 4, y: 4, width: width - 8, height: height / 3, radius: borderRadius / 2 });
   }
 
   /**
@@ -176,7 +176,7 @@ export class SpeechBubble extends Container {
     }
 
     this.tail.closePath();
-    this.tail.fill({ color: tailColor, alpha: 0.95 });
+    this.tail.fill({ color: new Uint8Array([((tailColor >> 16) & 0xFF) / 255, ((tailColor >> 8) & 0xFF) / 255, (tailColor & 0xFF) / 255]), alpha: 0.95 });
 
     // Position tail based on bubble position
     this.positionTail(bubbleWidth, bubbleHeight);

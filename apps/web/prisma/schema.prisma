@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "debian-openssl-3.0.x"]
 }
 
 datasource db {
@@ -7,185 +8,126 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
-  id            String    @id @default(uuid()) @db.Uuid
-  username      String?   @unique @db.VarChar(50)
-  passwordHash  String?   @map("password_hash") @db.VarChar(255)
-  nickname      String?   @db.VarChar(50)
-  avatarUrl     String?   @map("avatar_url") @db.Text
-  grade         Int?
-  invitationCode String?  @unique @map("invitation_code") @db.VarChar(10)
-  invitedBy     String?   @map("invited_by") @db.Uuid
-  points        Int       @default(0)
-  level         Int       @default(1)
-  role          Role      @default(USER)
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username        String?   @unique @db.VarChar(50)
+  password_hash   String?   @db.VarChar(255)
+  nickname        String?   @db.VarChar(50)
+  avatar_url      String?
+  grade           Int?
+  invitation_code String    @unique @db.VarChar(10)
+  invited_by      String?   @db.Uuid
+  points          Int?      @default(0)
+  level           Int?      @default(1)
+  abilities       Json?     @default("{}")
+  created_at      DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime? @db.Timestamptz(6)
+  role            String?   @default("USER") @db.VarChar(20)
 
-  sessions      Session[]
-  userAgents    UserAgent[]
-  works         Work[]
-  assignedTasks ProjectTask[] @relation("UserAssignedTasks")
-
+  @@index([invitation_code], map: "idx_users_invitation_code")
+  @@index([username], map: "idx_users_username")
   @@map("users")
 }
 
 model Session {
-  id        String   @id @default(uuid()) @db.Uuid
-  userId    String   @map("user_id") @db.Uuid
-  token     String   @unique @db.VarChar(255)
-  expiresAt DateTime @map("expires_at")
-  createdAt DateTime @default(now()) @map("created_at")
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  token       String    @unique @db.VarChar(255)
+  device_info Json?
+  ip_address  String?   @db.Inet
+  expires_at  DateTime  @db.Timestamptz(6)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  @@index([expires_at], map: "idx_sessions_expires_at")
+  @@index([token], map: "idx_sessions_token")
   @@map("sessions")
 }
 
 model Agent {
-  id           String   @id @default(uuid()) @db.Uuid
-  name         String   @db.VarChar(100)
-  agentType    String   @unique @map("agent_type") @db.VarChar(50)
-  description  String?  @db.Text
-  personality  Json?
-  skills       Json?
-  avatarUrl    String?  @map("avatar_url") @db.Text
-  isPlatform   Boolean  @default(true) @map("is_platform")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  userAgents   UserAgent[]
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @db.VarChar(100)
+  agentType   String    @unique @map("agent_type") @db.VarChar(50)
+  description String?
+  personality Json?
+  skills      Json?
+  avatarUrl   String?   @map("avatar_url")
+  sprite_url  String?
+  isPlatform  Boolean?  @default(true) @map("is_platform")
+  is_active   Boolean?  @default(true)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("agents")
 }
 
 model UserAgent {
-  id           String  @id @default(uuid()) @db.Uuid
-  userId       String  @map("user_id") @db.Uuid
-  agentId      String  @map("agent_id") @db.Uuid
-  customName   String? @map("custom_name") @db.VarChar(100)
-  customConfig Json?   @map("custom_config")
-  createdAt    DateTime @default(now()) @map("created_at")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  agentId           String    @map("agent_id") @db.Uuid
+  customName        String?   @map("custom_name") @db.VarChar(100)
+  customConfig      Json?     @map("custom_config")
+  short_term_memory Json?
+  long_term_memory  Json?
+  trust_level       Int?      @default(0)
+  usage_count       Int?      @default(0)
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
 
-  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  agent        Agent   @relation(fields: [agentId], references: [id])
-
+  @@unique([userId, agentId])
+  @@index([userId], map: "idx_user_agents_user_id")
   @@map("user_agents")
 }
 
 model Project {
-  id              String   @id @default(uuid()) @db.Uuid
-  title           String   @db.VarChar(255)
-  description     String?  @db.Text
-  gradeMin        Int?     @map("grade_min")
-  gradeMax        Int?     @map("grade_max")
-  subject         String?  @db.VarChar(50)
-  difficulty      Int      @default(1)
-  status          String   @default("draft")
-  rubricCriteria  Json?    @map("rubric_criteria")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String    @db.VarChar(255)
+  description       String?
+  cover_image_url   String?
+  gradeMin          Int?      @map("grade_min")
+  gradeMax          Int?      @map("grade_max")
+  subject           String?   @db.VarChar(50)
+  tags              String[]
+  difficulty        Int?      @default(1)
+  estimated_minutes Int?
+  status            String?   @default("draft") @db.VarChar(20)
+  is_premium        Boolean?  @default(false)
+  created_by        String?   @db.Uuid
+  completed_count   Int?      @default(0)
+  like_count        Int?      @default(0)
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  tasks           ProjectTask[]
-  works           Work[]
-
+  @@index([gradeMin, gradeMax], map: "idx_projects_grade")
+  @@index([subject], map: "idx_projects_subject")
   @@map("projects")
 }
 
 model ProjectTask {
-  id             String   @id @default(uuid()) @db.Uuid
-  projectId      String   @map("project_id") @db.Uuid
-  title          String   @db.VarChar(255)
-  description    String?  @db.Text
-  orderIndex     Int      @map("order_index")
-  agentType      String?  @map("agent_type") @db.VarChar(50)
-  assignedTo     String?  @map("assigned_to") @db.Uuid
-  status         String   @default("todo")
-  dueDate        DateTime? @map("due_date")
-  rubricScores   Json?    @map("rubric_scores")
-  submissionContent String? @map("submission_content") @db.Text
-  submittedAt    DateTime? @map("submitted_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  project        Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  assignedUser   User?    @relation(fields: [assignedTo], references: [id], onDelete: SetNull, name: "UserAssignedTasks")
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId       String    @map("project_id") @db.Uuid
+  title           String    @db.VarChar(255)
+  description     String?
+  orderIndex      Int       @map("order_index")
+  agentType       String?   @map("agent_type") @db.VarChar(50)
+  expected_output String?
+  rubric          Json?
+  prerequisites   String[]  @db.Uuid
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
 
   @@map("project_tasks")
 }
 
-model Work {
-  id          String   @id @default(uuid()) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  projectId   String?  @map("project_id") @db.Uuid
-  title       String   @db.VarChar(255)
-  description String?  @db.Text
-  status      String   @default("pending_review")
-  submissionUrl String? @map("submission_url") @db.Text
-  rubricScores Json?   @map("rubric_scores")
-  score       Int?     @default(0)
-  feedback    String?  @db.Text
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project     Project? @relation(fields: [projectId], references: [id])
-
-  @@map("works")
-}
-
-model LlmConfig {
-  id          String   @id @default(uuid())
-  provider    String   @unique @db.VarChar(50)
-  apiKey      String   @map("api_key") @db.VarChar(255)
-  baseUrl     String?  @map("base_url") @db.Text
-  models      Json?
-  isActive    Boolean  @default(false) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("llm_configs")
-}
-
-model AgentConfig {
-  id          String   @id @default(uuid())
-  agentType   String   @unique @map("agent_type") @db.VarChar(50)
-  name        String   @db.VarChar(100)
-  description String?  @db.Text
-  personality Json?
-  skills      Json?
-  appearance  Json?
-  isEnabled   Boolean  @default(true) @map("is_enabled")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("agent_configs")
-}
-
-model SceneTemplate {
-  id          String   @id @default(uuid())
-  sceneType   String   @unique @map("scene_type") @db.VarChar(50)
-  name        String   @db.VarChar(100)
-  description String?  @db.Text
-  config      Json?
-  thumbnail   String?  @db.Text
-  isEnabled   Boolean  @default(true) @map("is_enabled")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("scene_templates")
+enum Role {
+  USER
+  ADMIN
 }
 
 enum MemoryType {
-  SHORT_TERM   // 短期记忆（24 小时）
-  LONG_TERM    // 长期记忆（永久）
-  EPISODIC     // 情景记忆（事件记录）
-  PROCEDURAL   // 程序记忆（技能）
-  SEMANTIC     // 语义记忆（知识）
+  SHORT_TERM
+  LONG_TERM
+  EPISODIC
+  PROCEDURAL
+  SEMANTIC
 }
 
 enum EvolutionType {
@@ -194,29 +136,4 @@ enum EvolutionType {
   BEHAVIOR_ADJUSTMENT
   KNOWLEDGE_EXPANSION
   PREFERENCE_CHANGE
-}
-
-model AgentMemory {
-  id          String   @id @default(uuid())
-  agentId     String   @map("agent_id")
-  type        MemoryType
-  content     String   @db.Text
-  importance  Int      @default(1) @map("importance") // 重要性 1-10
-  tags        String[]
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@map("agent_memories")
-}
-
-model AgentEvolution {
-  id           String   @id @default(uuid())
-  agentId      String   @map("agent_id")
-  changeType   EvolutionType
-  description  String   @db.Text
-  beforeState  Json?    @map("before_state")
-  afterState   Json?    @map("after_state")
-  triggerEvent String?  @map("trigger_event")
-  createdAt    DateTime @default(now()) @map("created_at")
-
-  @@map("agent_evolution_logs")
 }

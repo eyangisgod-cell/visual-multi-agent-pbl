@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { Application, Assets, Texture } from 'pixi.js'
+import { Application, Assets, Texture, Ticker } from 'pixi.js'
 import { useAuth } from '@/hooks/useAuth'
 import { CampusScene } from './scenes/CampusScene'
 import { Player } from './entities/Player'
@@ -15,6 +15,7 @@ interface PixiAppProps {
 export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const appRef = useRef<Application | null>(null)
+  const tickerRef = useRef<Ticker | null>(null)
   const [isReady, setIsReady] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,6 +31,12 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
   // Initialize PixiJS Application
   useEffect(() => {
     if (!containerRef.current || authLoading || !user) return
+
+    // Clean up any existing E2E agent layer to prevent duplicates
+    const existingE2ELayer = document.getElementById('e2e-agent-layer')
+    if (existingE2ELayer) {
+      existingE2ELayer.innerHTML = ''
+    }
 
     const initPixi = async () => {
       try {
@@ -67,6 +74,22 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
         ;(app as Application & { currentScene?: CampusScene; player?: Player }).currentScene = campusScene
         ;(app as Application & { currentScene?: CampusScene; player?: Player }).player = player
 
+        // Start game loop ticker
+        const ticker = new Ticker()
+        ticker.add(() => {
+          // PixiJS Ticker provides deltaTime as frames, use deltaTime directly
+          // deltaTime is the time elapsed since last frame in milliseconds
+          player.update(ticker.deltaTime)
+          // Update position display
+          const pos = player.getPosition()
+          const posElement = document.getElementById('position-display')
+          if (posElement && typeof pos.x === 'number' && typeof pos.y === 'number') {
+            posElement.textContent = `(${Math.round(pos.x)}, ${Math.round(pos.y)})`
+          }
+        })
+        ticker.start()
+        tickerRef.current = ticker
+
         setIsReady(true)
 
         // Handle window resize
@@ -78,6 +101,12 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
 
         return () => {
           window.removeEventListener('resize', handleResize)
+          // Stop and destroy ticker
+          if (tickerRef.current) {
+            tickerRef.current.stop()
+            tickerRef.current.destroy()
+          }
+          player.destroy()
           campusScene.destroy()
           app.destroy(true)
         }
@@ -175,6 +204,20 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
     const player = new Player(app, newScene)
     player.create()
 
+    // Update ticker to use new player
+    if (tickerRef.current) {
+      tickerRef.current.removeAll()
+      tickerRef.current.add(() => {
+        player.update(tickerRef.current!.deltaTime)
+        // Update position display
+        const pos = player.getPosition()
+        const posElement = document.getElementById('position-display')
+        if (posElement && typeof pos.x === 'number' && typeof pos.y === 'number') {
+          posElement.textContent = `(${Math.round(pos.x)}, ${Math.round(pos.y)})`
+        }
+      })
+    }
+
     appWithScene.currentScene = newScene
     appWithScene.player = player
 
@@ -221,6 +264,14 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
         ref={containerRef}
         className="overflow-hidden"
         style={{ width, height }}
+      />
+      {/* E2E Test Bridge - Agent markers container for testing */}
+      <div
+        id="e2e-agent-layer"
+        className="absolute inset-0"
+        data-testid="agent-container"
+        aria-hidden="true"
+        style={{ pointerEvents: 'none' }}
       />
       {!isReady && (
         <div className="absolute inset-0 flex items-center justify-center bg-gray-900 bg-opacity-75">

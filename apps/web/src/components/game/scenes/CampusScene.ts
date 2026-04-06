@@ -1,5 +1,7 @@
 import { Application, Container, Sprite, Graphics, Texture, TilingSprite } from 'pixi.js'
 import { Assets } from 'pixi.js'
+import { MentorAgent } from '../agents/MentorAgent'
+import { SpeechBubble } from '../agents/SpeechBubble'
 
 export interface CampusSceneConfig {
   width: number
@@ -17,6 +19,43 @@ export interface CollisionTile {
 }
 
 /**
+ * Get or create the E2E test agent layer
+ */
+function getE2eAgentLayer(): HTMLElement | null {
+  if (typeof window === 'undefined') return null
+  return document.getElementById('e2e-agent-layer')
+}
+
+/**
+ * Create an E2E test marker element for an agent
+ */
+function createAgentMarker(agentId: string, name: string, x: number, y: number, onClick?: () => void): HTMLElement {
+  const marker = document.createElement('div')
+  marker.setAttribute('data-testid', `agent-${agentId}`)
+  marker.setAttribute('data-agent-id', agentId)
+  marker.setAttribute('data-agent-name', name)
+  marker.setAttribute('data-position', `${Math.round(x)},${Math.round(y)}`)
+  marker.setAttribute('data-animation-state', 'idle')
+  marker.style.position = 'absolute'
+  marker.style.left = `${x}px`
+  marker.style.top = `${y}px`
+  marker.style.width = '64px'
+  marker.style.height = '96px'
+  // Invisible but detectable by tests
+  marker.style.opacity = '0'
+  // Allow pointer events for E2E testing
+  marker.style.pointerEvents = 'auto'
+  marker.style.cursor = 'pointer'
+
+  // Add click handler for E2E testing
+  if (onClick) {
+    marker.addEventListener('click', onClick)
+  }
+
+  return marker
+}
+
+/**
  * CampusScene - Main pixel-art virtual campus environment
  *
  * Creates a 2D top-down view of a campus with:
@@ -24,6 +63,7 @@ export interface CollisionTile {
  * - Buildings (collision zones)
  * - Trees and decorations
  * - Pathways between locations
+ * - Agent sprites
  */
 export class CampusScene {
   private app: Application
@@ -33,9 +73,13 @@ export class CampusScene {
   public objectLayer: Container
   private collisionLayer: Container
   private decorationsLayer: Container
+  public agentLayer: Container
 
   private groundTiles: TilingSprite[] = []
   private collisionTiles: CollisionTile[] = []
+  private agents: MentorAgent[] = []
+  private speechBubbles: Map<string, SpeechBubble> = new Map()
+  private agentMarkers: Map<string, HTMLElement> = new Map()
   private isLoaded = false
   private isStarted = false
 
@@ -58,6 +102,7 @@ export class CampusScene {
     this.objectLayer = new Container()
     this.collisionLayer = new Container()
     this.decorationsLayer = new Container()
+    this.agentLayer = new Container()
   }
 
   /**
@@ -91,6 +136,7 @@ export class CampusScene {
     this.sceneContainer.addChild(this.groundLayer)
     this.sceneContainer.addChild(this.collisionLayer)
     this.sceneContainer.addChild(this.objectLayer)
+    this.sceneContainer.addChild(this.agentLayer)
     this.sceneContainer.addChild(this.decorationsLayer)
 
     // Add to app stage
@@ -100,6 +146,7 @@ export class CampusScene {
     this.buildGround()
     this.buildCollisions()
     this.buildObjects()
+    this.buildAgents()
     this.buildDecorations()
 
     this.isStarted = true
@@ -272,6 +319,105 @@ export class CampusScene {
   }
 
   /**
+   * Build agent sprites in the scene
+   */
+  private buildAgents(): void {
+    const e2eLayer = getE2eAgentLayer()
+
+    // Clean up any existing markers before creating new ones
+    if (e2eLayer) {
+      e2eLayer.innerHTML = ''
+    }
+    this.agentMarkers.clear()
+
+    // Create 5 platform agents at fixed positions
+    const agentConfigs = [
+      { id: 'mentor', name: '智慧导师', role: 'Mentor', x: 10, y: 8, primaryColor: 0x3498DB, secondaryColor: 0x2980B9, accessoryColor: 0x1ABC9C },
+      { id: 'designer', name: '创意设计师', role: 'Designer', x: 25, y: 8, primaryColor: 0xE91E63, secondaryColor: 0xC2185B, accessoryColor: 0xF06292 },
+      { id: 'analyst', name: '数据分析师', role: 'Analyst', x: 10, y: 20, primaryColor: 0x9B59B6, secondaryColor: 0x8E44AD, accessoryColor: 0xBB8FCE },
+      { id: 'marketer', name: '运营推广师', role: 'Marketer', x: 25, y: 20, primaryColor: 0xF39C12, secondaryColor: 0xD68910, accessoryColor: 0xF5CBA7 },
+      { id: 'assistant', name: 'CEO 助手', role: 'Assistant', x: 18, y: 14, primaryColor: 0x2ECC71, secondaryColor: 0x27AE60, accessoryColor: 0x58D68D },
+    ]
+
+    agentConfigs.forEach(config => {
+      const agent = new MentorAgent(config.x * this.TILE_SIZE, config.y * this.TILE_SIZE)
+
+      // Set up click handler to show speech bubble
+      const handleClick = () => {
+        this.showSpeechBubble(agent, `你好！我是${config.name}，很高兴为你服务。`)
+      }
+      agent.onClick = handleClick
+
+      this.agents.push(agent)
+      this.agentLayer.addChild(agent)
+
+      // Create E2E test marker with click handler
+      if (e2eLayer) {
+        const marker = createAgentMarker(config.id, config.name, config.x * this.TILE_SIZE, config.y * this.TILE_SIZE, handleClick)
+        e2eLayer.appendChild(marker)
+        this.agentMarkers.set(config.id, marker)
+      }
+    })
+
+    console.log(`CampusScene: ${this.agents.length} agents created`)
+  }
+
+  /**
+   * Show speech bubble above an agent
+   */
+  public showSpeechBubble(agent: MentorAgent, text: string, duration: number = 3000): void {
+    // Remove existing bubble for this agent
+    const existingBubble = this.speechBubbles.get(agent.id)
+    if (existingBubble) {
+      existingBubble.destroy()
+      this.speechBubbles.delete(agent.id)
+    }
+
+    // Create new speech bubble
+    const bubble = new SpeechBubble({
+      text,
+      position: 'top',
+      maxWidth: 180,
+      backgroundColor: 0xFFFFFF,
+      textColor: 0x333333,
+      fontSize: 12,
+      showTail: true,
+      animated: true,
+      duration,
+    })
+
+    // Position bubble above agent
+    bubble.x = -40
+    bubble.y = -80
+
+    agent.addChild(bubble)
+    this.speechBubbles.set(agent.id, bubble)
+
+    // Update E2E marker with speaking state
+    const marker = this.agentMarkers.get(agent.id)
+    if (marker) {
+      marker.setAttribute('data-speaking', 'true')
+      setTimeout(() => {
+        marker?.removeAttribute('data-speaking')
+      }, duration)
+    }
+  }
+
+  /**
+   * Get all agents in the scene
+   */
+  public getAgents(): MentorAgent[] {
+    return [...this.agents]
+  }
+
+  /**
+   * Get agent by ID
+   */
+  public getAgentById(id: string): MentorAgent | undefined {
+    return this.agents.find(agent => agent.id === id)
+  }
+
+  /**
    * Check collision at a given position
    */
   checkCollision(x: number, y: number, width: number, height: number): boolean {
@@ -304,7 +450,7 @@ export class CampusScene {
    * Get object layer for adding entities
    */
   getLayer(): Container {
-    return this.objectLayer
+    return this.agentLayer
   }
 
   /**
@@ -342,6 +488,12 @@ export class CampusScene {
    * Destroy the scene and clean up resources
    */
   destroy(): void {
+    // Clean up E2E markers
+    this.agentMarkers.forEach(marker => {
+      marker.remove()
+    })
+    this.agentMarkers.clear()
+
     this.groundLayer.destroy({ children: true })
     this.objectLayer.destroy({ children: true })
     this.collisionLayer.destroy({ children: true })

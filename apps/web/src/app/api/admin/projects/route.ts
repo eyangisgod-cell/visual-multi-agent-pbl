@@ -20,24 +20,6 @@ export async function GET(request: NextRequest) {
         where,
         skip,
         take: limit,
-        include: {
-          tasks: {
-            select: {
-              id: true,
-              title: true,
-              status: true,
-              assignedTo: true,
-            },
-          },
-          works: {
-            select: {
-              id: true,
-              title: true,
-              score: true,
-              status: true,
-            },
-          },
-        },
         orderBy: { createdAt: 'desc' },
       }),
       prisma.project.count({ where }),
@@ -73,6 +55,7 @@ export async function POST(request: NextRequest) {
       subject,
       difficulty,
       rubricCriteria,
+      tags,
     } = body;
 
     // 验证必填字段
@@ -92,6 +75,7 @@ export async function POST(request: NextRequest) {
         subject,
         difficulty: difficulty || 1,
         rubricCriteria,
+        tags: tags || [],
         status: 'draft',
       },
     });

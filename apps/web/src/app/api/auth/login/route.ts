@@ -16,10 +16,11 @@ const loginSchema = z.object({
   password: z.string().min(6).max(100)
 })
 
-// Generate session token
+// Generate session token with crypto random component
 function generateSessionToken(): string {
+  const randomBytes = require('crypto').randomBytes(32).toString('hex');
   return jwt.sign(
-    { type: 'session' },
+    { type: 'session', random: randomBytes },
     JWT_SECRET,
     { expiresIn: JWT_EXPIRES_IN }
   )
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
       where: { username }
     })
 
-    if (!user || !user.passwordHash) {
+    if (!user || !user.password_hash) {
       return NextResponse.json(
         { error: 'Invalid username or password' },
         { status: 401 }
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Verify password
-    const passwordValid = await bcrypt.compare(password, user.passwordHash)
+    const passwordValid = await bcrypt.compare(password, user.password_hash)
 
     if (!passwordValid) {
       return NextResponse.json(
@@ -72,18 +73,56 @@ export async function POST(request: NextRequest) {
       { expiresIn: JWT_EXPIRES_IN }
     )
 
-    // Create session in database
-    const sessionToken = generateSessionToken()
+    // Create session in database with retry logic for token collision
     const expiresAt = new Date()
     expiresAt.setDate(expiresAt.getDate() + 7)
 
-    await prisma.session.create({
-      data: {
+    // Clean up expired sessions for this user first
+    await prisma.session.deleteMany({
+      where: {
         userId: user.id,
-        token: sessionToken,
-        expiresAt
+        expires_at: {
+          lt: new Date()
+        }
       }
     })
+
+    // Also clean up any existing sessions for this user to prevent token collision
+    await prisma.session.deleteMany({
+      where: {
+        userId: user.id
+      }
+    })
+
+    // Create new session with retry logic
+    let sessionToken: string
+    let session
+    let attempts = 0
+    const maxAttempts = 3
+
+    while (attempts < maxAttempts) {
+      try {
+        sessionToken = generateSessionToken()
+        session = await prisma.session.create({
+          data: {
+            userId: user.id,
+            token: sessionToken,
+            expires_at: expiresAt
+          }
+        })
+        break
+      } catch (createError: any) {
+        // If unique constraint violation, retry with new token
+        if (createError?.code === 'P2002' && createError?.meta?.target?.includes('token')) {
+          attempts++
+          if (attempts === maxAttempts) {
+            throw createError
+          }
+          continue
+        }
+        throw createError
+      }
+    }
 
     // Create response with cookie
     const response = NextResponse.json({
