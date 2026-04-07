@@ -29,5 +29,23 @@
       "type": "image/png",
       "form_factor": "narrow"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "游戏中心",
+      "short_name": "游戏",
+      "description": "进入游戏学习中心",
+      "url": "/game",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "项目列表",
+      "short_name": "项目",
+      "description": "查看可用项目",
+      "url": "/projects",
+      "icons": [{ "src": "/icons/icon-192x192.png", "sizes": "192x192" }]
+    }
+  ],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
