@@ -25,6 +25,12 @@ export async function GET(
             title: true,
           },
         },
+        _count: {
+          select: {
+            likes: true,
+            comments: true,
+          },
+        },
       },
     });
 

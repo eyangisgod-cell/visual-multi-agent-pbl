@@ -41,6 +41,12 @@ export async function GET(request: NextRequest) {
               title: true,
             },
           },
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+            },
+          },
         },
         orderBy: { createdAt: 'desc' },
       }),
