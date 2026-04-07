@@ -3,17 +3,42 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// GET /api/admin/projects - 获取项目列表
+// GET /api/admin/projects - 获取项目列表（支持搜索和筛选）
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
     const status = searchParams.get('status');
+    const search = searchParams.get('search'); // 搜索关键词
 
     const skip = (page - 1) * limit;
 
-    const where = status ? { status } : {};
+    // 构建查询条件
+    const where: any = {};
+
+    // 状态筛选
+    if (status) {
+      where.status = status;
+    }
+
+    // 搜索功能（标题或描述）
+    if (search) {
+      where.OR = [
+        {
+          title: {
+            contains: search,
+            mode: 'insensitive', // 不区分大小写
+          },
+        },
+        {
+          description: {
+            contains: search,
+            mode: 'insensitive',
+          },
+        },
+      ];
+    }
 
     const [projects, total] = await Promise.all([
       prisma.project.findMany({
