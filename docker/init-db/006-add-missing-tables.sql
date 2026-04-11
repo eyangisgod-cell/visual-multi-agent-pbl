@@ -41,6 +41,7 @@ CREATE TABLE IF NOT EXISTS scene_templates (
 );
 
 -- Create agent_memories table if not exists
+-- Note: embedding column is added by 007-vector-index.sql if pgvector is available
 CREATE TABLE IF NOT EXISTS agent_memories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     agent_id VARCHAR(255) NOT NULL,
@@ -48,6 +49,10 @@ CREATE TABLE IF NOT EXISTS agent_memories (
     content TEXT NOT NULL,
     importance INTEGER DEFAULT 1,
     tags TEXT[] DEFAULT '{}',
+    metadata JSONB,
+    embedding VECTOR(384),  -- For sentence-transformers all-MiniLM-L6-v2 (384 dimensions)
+    expires_at TIMESTAMP WITH TIME ZONE,
+    consolidated BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 

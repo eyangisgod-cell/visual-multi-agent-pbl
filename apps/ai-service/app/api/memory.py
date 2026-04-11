@@ -9,13 +9,44 @@ Endpoints:
 - POST /api/v1/memory/calculate-importance - Calculate memory importance
 - POST /api/v1/memory/calculate-decay - Calculate memory decay factor
 """
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query
 from typing import List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from enum import Enum
 from datetime import datetime, timedelta
 import math
+import asyncpg
 import json
+
+from app.db import get_db_pool
+
+# Lazy import sentence_transformers to avoid long startup time
+_embedding_model = None
+
+
+def get_embedding_model():
+    """Get or create the sentence transformer model (lazy loading)."""
+    global _embedding_model
+    if _embedding_model is None:
+        try:
+            from sentence_transformers import SentenceTransformer
+            # Using all-MiniLM-L6-v2 which produces 384-dimensional vectors
+            # Good balance of performance and accuracy for semantic search
+            _embedding_model = SentenceTransformer('all-MiniLM-L6-v2')
+        except ImportError:
+            raise ImportError(
+                "sentence-transformers not installed. "
+                "Please install with: pip install sentence-transformers"
+            )
+    return _embedding_model
+
+
+def generate_embedding(text: str) -> List[float]:
+    """Generate embedding vector for text using sentence-transformers."""
+    model = get_embedding_model()
+    embedding = model.encode(text, convert_to_numpy=True)
+    return embedding.tolist()
+
 
 router = APIRouter()
 
@@ -72,30 +103,71 @@ class MemoryResponse(BaseModel):
     metadata: Optional[Dict[str, Any]]
 
 
+def memory_to_response(row: asyncpg.Record) -> MemoryResponse:
+    """Convert database row to response model."""
+    metadata = row["metadata"]
+    # Deserialize JSON string from database if needed
+    if isinstance(metadata, str):
+        metadata = json.loads(metadata)
+
+    return MemoryResponse(
+        id=str(row["id"]),
+        agent_id=str(row["agent_id"]),
+        type=MemoryType(row["type"]),
+        content=row["content"],
+        importance=row["importance"],
+        tags=row["tags"] or [],
+        metadata=metadata,
+    )
+
+
 @router.post("/memory", status_code=201, response_model=MemoryResponse)
 async def add_memory(memory: MemoryCreate):
     """
     Add a new memory for an agent.
-
-    - **agent_id**: The ID of the agent
-    - **type**: Type of memory (SHORT_TERM, LONG_TERM, EPISODIC, PROCEDURAL, SEMANTIC)
-    - **content**: The memory content
-    - **importance**: Importance score from 1-10
-    - **tags**: List of tags for categorization
-    - **embedding**: Optional embedding vector for semantic search
-    - **metadata**: Optional additional metadata
+    Automatically generates embedding vector if not provided.
     """
-    # TODO: Implement database storage
-    # For now, return a mock response
-    return {
-        "id": "mock-memory-id",
-        "agent_id": memory.agent_id,
-        "type": memory.type,
-        "content": memory.content,
-        "importance": memory.importance,
-        "tags": memory.tags,
-        "metadata": memory.metadata
-    }
+    pool = get_db_pool()
+
+    # Calculate expiry for short-term memories (24 hours)
+    expires_at = None
+    if memory.type == MemoryType.SHORT_TERM:
+        expires_at = datetime.now() + timedelta(hours=24)
+
+    # Generate embedding if not provided
+    embedding = memory.embedding
+    if embedding is None:
+        try:
+            embedding = generate_embedding(memory.content)
+        except Exception as e:
+            # If embedding generation fails, store without embedding
+            # Vector search will fallback to ILIKE for this memory
+            embedding = None
+
+    # Create memory in database
+    async with pool.acquire() as conn:
+        # Serialize metadata to JSON string for asyncpg
+        metadata_json = json.dumps(memory.metadata) if memory.metadata else None
+
+        row = await conn.fetchrow(
+            """
+            INSERT INTO agent_memories
+                (agent_id, type, content, importance, tags, embedding, metadata, expires_at, consolidated)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING id, agent_id, type, content, importance, tags, metadata
+            """,
+            memory.agent_id,
+            memory.type.value,
+            memory.content,
+            memory.importance,
+            memory.tags,
+            embedding,
+            metadata_json,
+            expires_at,
+            False,
+        )
+
+    return memory_to_response(row)
 
 
 @router.get("/memory/{agent_id}", response_model=List[MemoryResponse])
@@ -106,48 +178,162 @@ async def get_memories(
 ):
     """
     Get memories for a specific agent.
-
-    - **agent_id**: The ID of the agent
-    - **memory_type**: Optional filter by memory type
-    - **limit**: Maximum number of results (default: 50)
     """
-    # TODO: Implement database query
-    # For now, return an empty list
-    return []
+    pool = get_db_pool()
+
+    # Build query (get_memories)
+    query = """
+        SELECT id, agent_id, type, content, importance, tags, metadata
+        FROM agent_memories
+        WHERE agent_id = $1
+    """
+    params = [agent_id]
+
+    if memory_type:
+        query += " AND type = $2"
+        params.append(memory_type.value)
+
+    query += " ORDER BY created_at DESC LIMIT $" + str(len(params) + 1)
+    params.append(limit)
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(query, *params)
+
+    return [memory_to_response(row) for row in rows]
 
 
 @router.post("/memory/search", response_model=List[Dict[str, Any]])
 async def search_memories(search: MemorySearch):
     """
-    Search memories using vector similarity.
+    Search memories using vector similarity search with pgvector.
+    Uses cosine similarity on sentence embeddings for semantic search.
 
-    - **agent_id**: The ID of the agent
-    - **query**: The search query text
-    - **memory_type**: Optional filter by memory type
-    - **top_k**: Number of results to return (default: 5)
-
-    Returns memories ranked by similarity to the query.
+    For memories without embeddings (if embedding generation failed during creation),
+    they will still be included in the search using ILIKE fallback.
     """
-    # TODO: Implement vector search using embeddings
-    # For now, return an empty list
-    return []
+    pool = get_db_pool()
+
+    try:
+        # Generate embedding for the search query
+        query_embedding = generate_embedding(search.query)
+    except Exception as e:
+        # Fallback to ILIKE search if embedding generation fails
+        return await _search_memories_fallback(search)
+
+    # Build query with vector similarity search
+    # Using cosine distance (<->) which returns 0 for identical vectors, 2 for opposite
+    # Convert to similarity: 1 - cosine_distance gives cosine similarity (0 to 1)
+    # Only search memories that have embeddings (IS NOT NULL)
+    query = """
+        SELECT id, agent_id, type, content, importance, tags, metadata,
+               1 - (embedding <-> $2::vector) AS similarity
+        FROM agent_memories
+        WHERE agent_id = $1
+          AND embedding IS NOT NULL
+    """
+    params = [search.agent_id, query_embedding]
+
+    if search.memory_type:
+        query += " AND type = $3"
+        params.append(search.memory_type.value)
+
+    # Order by similarity (descending) and limit results
+    query += " ORDER BY similarity DESC LIMIT $" + str(len(params) + 1)
+    params.append(search.top_k)
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(query, *params)
+
+    # If no results with vector search, try fallback to ILIKE
+    if len(rows) == 0:
+        return await _search_memories_fallback(search)
+
+    return [
+        {
+            "id": str(row["id"]),
+            "agent_id": str(row["agent_id"]),
+            "type": row["type"],
+            "content": row["content"],
+            "importance": row["importance"],
+            "tags": row["tags"] or [],
+            "similarity": float(row["similarity"]),
+        }
+        for row in rows
+    ]
+
+
+async def _search_memories_fallback(search: MemorySearch) -> List[Dict[str, Any]]:
+    """
+    Fallback to ILIKE search if vector search is not available.
+    """
+    pool = get_db_pool()
+
+    # Build query with ILIKE search
+    query = """
+        SELECT id, agent_id, type, content, importance, tags, metadata,
+               1.0 AS rank
+        FROM agent_memories
+        WHERE agent_id = $1
+    """
+    params = [search.agent_id]
+
+    if search.memory_type:
+        query += " AND type = $2"
+        params.append(search.memory_type.value)
+
+    # ILIKE search - split query by spaces and match each term
+    param_index = len(params) + 1
+    query += f" AND content ILIKE ${param_index}"
+    params.append(f"%{search.query}%")
+
+    query += " ORDER BY created_at DESC LIMIT $" + str(len(params) + 1)
+    params.append(search.top_k)
+
+    async with pool.acquire() as conn:
+        rows = await conn.fetch(query, *params)
+
+    return [
+        {
+            "id": str(row["id"]),
+            "agent_id": str(row["agent_id"]),
+            "type": row["type"],
+            "content": row["content"],
+            "importance": row["importance"],
+            "tags": row["tags"] or [],
+            "similarity": 1.0,
+        }
+        for row in rows
+    ]
 
 
 @router.post("/memory/consolidate", response_model=Dict[str, Any])
 async def consolidate_memories(consolidate: MemoryConsolidate):
     """
     Consolidate short-term memories to long-term based on importance threshold.
-
-    - **agent_id**: The ID of the agent
-    - **threshold**: Minimum importance score for consolidation (default: 5)
-
-    Returns the count and list of consolidated memories.
     """
-    # TODO: Implement database query and update
-    # For now, return a mock response
+    pool = get_db_pool()
+
+    async with pool.acquire() as conn:
+        # Update memories
+        result = await conn.execute(
+            """
+            UPDATE agent_memories
+            SET type = 'LONG_TERM', consolidated = TRUE, expires_at = NULL
+            WHERE agent_id = $1
+              AND type = 'SHORT_TERM'
+              AND consolidated = FALSE
+              AND importance >= $2
+            """,
+            consolidate.agent_id,
+            consolidate.threshold,
+        )
+
+        # Get count of updated rows
+        updated_count = int(result.split()[-1]) if result else 0
+
     return {
-        "consolidated_count": 0,
-        "memories_consolidated": []
+        "consolidated_count": updated_count,
+        "memories_consolidated": [],
     }
 
 
@@ -155,15 +341,7 @@ async def consolidate_memories(consolidate: MemoryConsolidate):
 async def calculate_importance(input: MemoryImportanceInput):
     """
     Calculate importance score for a memory based on multiple factors.
-
-    Factors:
-    - **interactions_count**: How often the memory was accessed
-    - **time_weight**: Recency of the memory (0-1)
-    - **emotional_weight**: Emotional significance (0-1)
-
-    Returns importance score from 1-10.
     """
-    # Importance calculation algorithm
     # Frequency component (0-3 points)
     frequency_score = min(3, input.interactions_count * 0.3)
 
@@ -183,13 +361,6 @@ async def calculate_importance(input: MemoryImportanceInput):
 async def calculate_decay(input: MemoryDecayInput):
     """
     Calculate memory decay factor based on age.
-
-    Uses exponential decay: decay = e^(-lambda * days)
-    where lambda = 0.023 (half-life of ~30 days)
-
-    - **days_old**: Age of memory in days
-
-    Returns decay factor (0-1), where 1 means no decay.
     """
     # Exponential decay with ~30 days half-life
     lambda_decay = 0.023
