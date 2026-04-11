@@ -3,7 +3,7 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-// POST /api/admin/works/[id]/review - 审核作品（批准/拒绝）
+// POST /api/admin/works/[id]/review - 审核作品（批准或拒绝）
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -12,7 +12,7 @@ export async function POST(
     const body = await request.json();
     const { action, reason } = body;
 
-    // 验证操作类型
+    // 验证 action 参数
     if (!action || !['approve', 'reject'].includes(action)) {
       return NextResponse.json(
         { error: 'Invalid action. Must be "approve" or "reject"' },
@@ -20,15 +20,7 @@ export async function POST(
       );
     }
 
-    // 拒绝操作需要填写原因
-    if (action === 'reject' && !reason) {
-      return NextResponse.json(
-        { error: 'Reject reason is required' },
-        { status: 400 }
-      );
-    }
-
-    // 检查作品是否存在
+    // 查找作品
     const existingWork = await prisma.work.findUnique({
       where: { id: params.id },
     });
@@ -40,15 +32,30 @@ export async function POST(
       );
     }
 
-    // 执行审核操作
-    const newStatus = action === 'approve' ? 'published' : 'rejected';
+    // 根据 action 更新作品状态
+    let newStatus: string;
+    let updateData: any = {};
+
+    if (action === 'approve') {
+      newStatus = 'published';
+    } else {
+      // action === 'reject'
+      if (!reason || reason.trim() === '') {
+        return NextResponse.json(
+          { error: 'Reject reason is required' },
+          { status: 400 }
+        );
+      }
+      newStatus = 'rejected';
+      // 将拒绝原因添加到作品描述中
+      updateData.description = `${existingWork.description || ''}\n\n[审核拒绝原因]: ${reason}`;
+    }
+
+    updateData.status = newStatus;
 
     const updatedWork = await prisma.work.update({
       where: { id: params.id },
-      data: {
-        status: newStatus,
-        ...(action === 'reject' && { description: reason }), // 将拒绝原因存储在 description 中
-      },
+      data: updateData,
       include: {
         user: {
           select: {
@@ -66,29 +73,12 @@ export async function POST(
       },
     });
 
-    // TODO: 创建审计日志
-    // await prisma.auditLog.create({
-    //   data: {
-    //     action: action === 'approve' ? 'WORK_APPROVED' : 'WORK_REJECTED',
-    //     entityId: params.id,
-    //     entityType: 'WORK',
-    //     metadata: { reason, previousStatus: existingWork.status },
-    //     ...
-    //   }
-    // });
-
     return NextResponse.json({
       work: updatedWork,
-      message: `Work ${action}ed successfully`,
+      message: `Work ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error reviewing work:', error);
-    if (error?.code === 'P2025') {
-      return NextResponse.json(
-        { error: 'Work not found' },
-        { status: 404 }
-      );
-    }
     return NextResponse.json(
       { error: 'Failed to review work' },
       { status: 500 }
