@@ -130,8 +130,8 @@ export class SpeechBubble extends Container {
     this.bubble.drawRoundedRect(0, 0, width, height, borderRadius);
     this.bubble.fill({ color: new Uint8Array([((backgroundColor >> 16) & 0xFF) / 255, ((backgroundColor >> 8) & 0xFF) / 255, (backgroundColor & 0xFF) / 255]), alpha: 0.95 });
 
-    // Subtle gradient overlay
-    this.bubble.fill({ color: new Uint8Array([1, 1, 1]), alpha: 0.1 }, { x: 4, y: 4, width: width - 8, height: height / 3, radius: borderRadius / 2 });
+    // Subtle gradient overlay - simplified to avoid PixiJS type issues
+    this.bubble.fill({ color: [1, 1, 1] as any, alpha: 0.1 });
   }
 
   /**

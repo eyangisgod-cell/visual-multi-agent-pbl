@@ -74,7 +74,7 @@ export default function ProjectsPage() {
       if (res.ok) {
         setMessage({ text: '项目创建成功', type: 'success' });
         setShowCreateModal(false);
-        loadProjects();
+        await loadProjects(1);
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ text: '项目创建失败', type: 'error' });
@@ -99,7 +99,7 @@ export default function ProjectsPage() {
         setMessage({ text: '项目已删除', type: 'success' });
         setShowDeleteConfirm(false);
         setProjectToDelete(null);
-        loadProjects();
+        await loadProjects(1);
         setTimeout(() => setMessage(null), 3000);
       } else {
         setMessage({ text: '项目删除失败', type: 'error' });
@@ -325,7 +325,7 @@ export default function ProjectsPage() {
                   if (res.ok) {
                     setMessage({ text: '项目创建成功', type: 'success' });
                     setShowCreateModal(false);
-                    loadProjects();
+                    await loadProjects(1);
                     setTimeout(() => setMessage(null), 3000);
                   } else {
                     setMessage({ text: '项目创建失败', type: 'error' });
@@ -427,7 +427,7 @@ export default function ProjectsPage() {
                   if (res.ok) {
                     setMessage({ text: '项目已更新', type: 'success' });
                     setEditingProject(null);
-                    loadProjects();
+                    await loadProjects(1);
                     setTimeout(() => setMessage(null), 3000);
                   } else {
                     setMessage({ text: '项目更新失败', type: 'error' });

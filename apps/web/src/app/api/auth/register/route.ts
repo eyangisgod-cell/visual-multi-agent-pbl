@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     let inviterId: string | null = null
     if (invitationCode) {
       const inviter = await prisma.user.findUnique({
-        where: { invitationCode }
+        where: { invitation_code: invitationCode }
       })
 
       if (!inviter) {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     // Ensure uniqueness
     while (true) {
       const existing = await prisma.user.findUnique({
-        where: { invitationCode: newInvitationCode }
+        where: { invitation_code: newInvitationCode }
       })
       if (!existing) break
       newInvitationCode = generateInvitationCode()
@@ -87,11 +87,11 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.create({
       data: {
         username,
-        passwordHash,
+        password_hash: passwordHash,
         nickname: nickname || null,
         grade: grade || null,
-        invitationCode: newInvitationCode,
-        invitedBy: inviterId
+        invitation_code: newInvitationCode,
+        invited_by: inviterId
       },
       select: {
         id: true,

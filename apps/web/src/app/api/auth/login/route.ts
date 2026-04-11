@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Create new session with retry logic
-    let sessionToken: string
+    let sessionToken: string = ''
     let session
     let attempts = 0
     const maxAttempts = 3

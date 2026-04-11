@@ -9,22 +9,25 @@ datasource db {
 }
 
 model User {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username        String?   @unique @db.VarChar(50)
-  password_hash   String?   @db.VarChar(255)
-  nickname        String?   @db.VarChar(50)
+  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username        String?       @unique @db.VarChar(50)
+  password_hash   String?       @db.VarChar(255)
+  nickname        String?       @db.VarChar(50)
   avatar_url      String?
   grade           Int?
-  invitation_code String    @unique @db.VarChar(10)
-  invited_by      String?   @db.Uuid
-  points          Int?      @default(0)
-  level           Int?      @default(1)
-  abilities       Json?     @default("{}")
-  created_at      DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime? @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime? @db.Timestamptz(6)
-  role            String?   @default("USER") @db.VarChar(20)
+  invitation_code String        @unique @db.VarChar(10)
+  invited_by      String?       @db.Uuid
+  points          Int?          @default(0)
+  level           Int?          @default(1)
+  abilities       Json?         @default("{}")
+  created_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?     @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?     @db.Timestamptz(6)
+  role            String?       @default("USER") @db.VarChar(20)
   works           Work[]
+  comments        WorkComment[]
+  assignedTasks   ProjectTask[] @relation("AssignedTasks")
+  likes           WorkLike[]
 
   @@index([invitation_code], map: "idx_users_invitation_code")
   @@index([username], map: "idx_users_username")
@@ -95,8 +98,10 @@ model Project {
   created_by        String?   @db.Uuid
   completed_count   Int?      @default(0)
   like_count        Int?      @default(0)
+  rubricCriteria    Json?     @map("rubric_criteria")
   createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  tasks             ProjectTask[]
   works             Work[]
 
   @@index([gradeMin, gradeMax], map: "idx_projects_grade")
@@ -114,26 +119,38 @@ model ProjectTask {
   expected_output String?
   rubric          Json?
   prerequisites   String[]  @db.Uuid
+  assignedTo      String?   @map("assigned_to") @db.Uuid
+  dueDate         DateTime? @map("due_date") @db.Timestamptz(6)
+  status          String?   @default("todo") @db.VarChar(20)
+  rubricScores    Json?     @map("rubric_scores")
+  submissionContent String? @map("submission_content") @db.Text
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project         Project   @relation(fields: [projectId], references: [id])
+  assignedUser    User?     @relation(fields: [assignedTo], references: [id], name: "AssignedTasks")
 
+  @@index([projectId], map: "idx_project_tasks_project_id")
+  @@index([assignedTo], map: "idx_project_tasks_assigned_to")
   @@map("project_tasks")
 }
 
 model Work {
-  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title         String    @db.VarChar(255)
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title         String        @db.VarChar(255)
   description   String?
-  coverImageUrl String?   @map("cover_image_url") @db.VarChar(500)
+  coverImageUrl String?       @map("cover_image_url") @db.VarChar(500)
   content       String?
-  status        String?   @default("draft") @db.VarChar(20) // draft, pending_review, published, rejected
-  score         Int?      @default(0)
-  is_premium    Boolean?  @default(false)
-  projectId     String    @map("project_id") @db.Uuid
-  userId        String    @map("user_id") @db.Uuid
-  createdAt     DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt     DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  project       Project   @relation(fields: [projectId], references: [id])
-  user          User      @relation(fields: [userId], references: [id])
+  status        String?       @default("draft") @db.VarChar(20) // draft, pending_review, published, rejected
+  score         Int?          @default(0)
+  is_premium    Boolean?      @default(false)
+  projectId     String        @map("project_id") @db.Uuid
+  userId        String        @map("user_id") @db.Uuid
+  createdAt     DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project       Project       @relation(fields: [projectId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
+  comments      WorkComment[]
+  likes         WorkLike[]
 
   @@index([projectId], map: "idx_works_project_id")
   @@index([userId], map: "idx_works_user_id")
@@ -142,13 +159,17 @@ model Work {
 }
 
 model WorkComment {
-  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   content   String
-  workId    String    @map("work_id") @db.Uuid
-  userId    String    @map("user_id") @db.Uuid
-  parentId  String?   @map("parent_id") @db.Uuid
-  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  workId    String        @map("work_id") @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  parentId  String?       @map("parent_id") @db.Uuid
+  createdAt DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  work      Work          @relation(fields: [workId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
+  parent    WorkComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  replies   WorkComment[] @relation("CommentReplies")
 
   @@index([workId], map: "idx_work_comments_work_id")
   @@map("work_comments")
@@ -159,6 +180,8 @@ model WorkLike {
   workId    String   @map("work_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  work      Work     @relation(fields: [workId], references: [id])
+  user      User     @relation(fields: [userId], references: [id])
 
   @@unique([workId, userId])
   @@index([workId], map: "idx_work_likes_work_id")
@@ -227,6 +250,38 @@ model AgentAvatar {
   @@index([agentId], map: "idx_agent_avatar_agent_id")
   @@index([userId], map: "idx_agent_avatar_user_id")
   @@map("agent_avatars")
+}
+
+// LLM 配置表
+model LlmConfig {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider    String   @unique @db.VarChar(50)
+  apiKey      String   @db.VarChar(500)
+  baseUrl     String?  @db.VarChar(500)
+  models      Json?
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([provider], map: "idx_llm_configs_provider")
+  @@map("llm_configs")
+}
+
+// 智能体配置表
+model AgentConfig {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentType   String   @unique @map("agent_type") @db.VarChar(50)
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  personality Json?
+  skills      Json?
+  appearance  Json?
+  isEnabled   Boolean  @default(true) @map("is_enabled")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([agentType], map: "idx_agent_configs_agent_type")
+  @@map("agent_configs")
 }
 
 model AuditLog {

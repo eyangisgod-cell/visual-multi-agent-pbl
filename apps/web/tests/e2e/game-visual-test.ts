@@ -35,7 +35,7 @@ test.describe('游戏页面视觉验证', () => {
       const el = document.getElementById('position-display');
       if (!el) return false;
       const text = el.textContent;
-      if (text === 'Loading...' || text.includes('NaN')) return false;
+      if (!text || text === 'Loading...' || text.includes('NaN')) return false;
       return /\(\d+, \d+\)/.test(text);
     }, { timeout: 15000 });
 

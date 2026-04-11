@@ -34,7 +34,11 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: {
+        ...devices['Desktop Chrome'],
+        // Enable service worker support for PWA tests
+        serviceWorkers: 'allow',
+      },
     },
 
     // Firefox and WebKit disabled - install browsers with: npx playwright install
@@ -70,13 +74,14 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:3000',
-    timeout: 120 * 1000,
-    reuseExistingServer: !process.env.CI,
-  },
+  /* webServer disabled - server already running */
+  // webServer: {
+  //   command: 'npm run dev',
+  //   url: 'http://localhost:3000',
+  //   timeout: 120 * 1000,
+  //   reuseExistingServer: true,
+  // },
 
-  /* Exclude API tests from Playwright - they are Jest tests */
-  testIgnore: ['**/tests/api/**'],
+  /* Exclude API tests and unit tests from Playwright - they are Jest tests */
+  testIgnore: ['**/tests/api/**', '**/tests/unit/**'],
 });

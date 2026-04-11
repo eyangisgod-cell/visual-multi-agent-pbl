@@ -206,9 +206,12 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
 
     // Update ticker to use new player
     if (tickerRef.current) {
-      tickerRef.current.removeAll()
-      tickerRef.current.add(() => {
-        player.update(tickerRef.current!.deltaTime)
+      // Destroy old ticker and create new one
+      tickerRef.current.destroy()
+      const newTicker = new Ticker()
+      newTicker.start()
+      newTicker.add(() => {
+        player.update(newTicker.deltaTime)
         // Update position display
         const pos = player.getPosition()
         const posElement = document.getElementById('position-display')
@@ -216,6 +219,7 @@ export function PixiApp({ width = 800, height = 600, onSceneChange }: PixiAppPro
           posElement.textContent = `(${Math.round(pos.x)}, ${Math.round(pos.y)})`
         }
       })
+      tickerRef.current = newTicker
     }
 
     appWithScene.currentScene = newScene

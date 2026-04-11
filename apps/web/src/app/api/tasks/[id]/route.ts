@@ -180,7 +180,6 @@ export async function POST(
       data: {
         submissionContent,
         rubricScores: rubricScores ? JSON.stringify(rubricScores) : undefined,
-        submittedAt: new Date(),
         status: 'review'
       },
       include: {
