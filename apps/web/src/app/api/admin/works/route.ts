@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createAuditLog, extractIpAddress, extractUserAgent } from '@/lib/audit-logger';
 
 const prisma = new PrismaClient();
 
@@ -110,6 +111,21 @@ export async function POST(request: NextRequest) {
         userId: userId || '',
         status: status || 'draft',
       },
+    });
+
+    // 创建审计日志
+    await createAuditLog({
+      action: 'CREATE_WORK',
+      entityType: 'Work',
+      entityId: work.id,
+      userId: userId || null,
+      metadata: {
+        title,
+        projectId,
+        status: status || 'draft',
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
     });
 
     return NextResponse.json(work, { status: 201 });

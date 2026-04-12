@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createAuditLog, extractIpAddress, extractUserAgent } from '@/lib/audit-logger';
 
 const prisma = new PrismaClient();
 
@@ -69,6 +70,27 @@ export async function PUT(
       },
     });
 
+    // 创建审计日志
+    await createAuditLog({
+      action: 'UPDATE_AGENT',
+      entityType: 'AgentConfig',
+      entityId: params.id,
+      metadata: {
+        name,
+        description,
+        changes: {
+          name: name !== existingAgent.name,
+          description: description !== existingAgent.description,
+          personality: JSON.stringify(personality) !== JSON.stringify(existingAgent.personality),
+          skills: JSON.stringify(skills) !== JSON.stringify(existingAgent.skills),
+          appearance: JSON.stringify(appearance) !== JSON.stringify(existingAgent.appearance),
+          isEnabled: isEnabled !== existingAgent.isEnabled,
+        },
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    });
+
     return NextResponse.json(updatedAgent);
   } catch (error) {
     console.error('Error updating agent:', error);
@@ -98,6 +120,19 @@ export async function DELETE(
 
     await prisma.agentConfig.delete({
       where: { id: params.id },
+    });
+
+    // 创建审计日志
+    await createAuditLog({
+      action: 'DELETE_AGENT',
+      entityType: 'AgentConfig',
+      entityId: params.id,
+      metadata: {
+        agentType: existingAgent.agentType,
+        name: existingAgent.name,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
     });
 
     return NextResponse.json({ message: 'Agent deleted successfully' });

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createAuditLog, extractIpAddress, extractUserAgent } from '@/lib/audit-logger';
 
 const prisma = new PrismaClient();
 
@@ -55,6 +56,77 @@ export async function GET(request: NextRequest) {
     console.error('Error fetching users:', error);
     return NextResponse.json(
       { error: 'Failed to fetch users' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/admin/users - 创建新用户（管理员功能）
+export async function POST(request: NextRequest) {
+  try {
+    const body = await request.json();
+    const {
+      username,
+      passwordHash,
+      nickname,
+      role,
+      grade,
+    } = body;
+
+    if (!username) {
+      return NextResponse.json(
+        { error: 'Username is required' },
+        { status: 400 }
+      );
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { username },
+    });
+
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'Username already exists' },
+        { status: 409 }
+      );
+    }
+
+    // 生成唯一的邀请码
+    const invitationCode = `INV-${Date.now()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+
+    const user = await prisma.user.create({
+      data: {
+        username,
+        password_hash: passwordHash,
+        nickname,
+        role: role || 'USER',
+        grade,
+        invitation_code: invitationCode,
+      },
+    });
+
+    // 创建审计日志
+    await createAuditLog({
+      action: 'CREATE_USER',
+      entityType: 'User',
+      entityId: user.id,
+      userId: user.id,
+      username: user.username,
+      metadata: {
+        username,
+        nickname,
+        role: role || 'USER',
+        invitationCode,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    });
+
+    return NextResponse.json(user, { status: 201 });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    return NextResponse.json(
+      { error: 'Failed to create user' },
       { status: 500 }
     );
   }

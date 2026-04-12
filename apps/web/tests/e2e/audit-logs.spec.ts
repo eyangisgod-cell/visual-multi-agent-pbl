@@ -425,4 +425,125 @@ test.describe('Task 11: Audit Logs System', () => {
       }
     });
   });
+
+  test.describe('Audit Log Integration with Key Operations', () => {
+    test('作品审核通过时应该自动记录审计日志', async ({ page, request }) => {
+      const csrfToken = await getCsrfToken(page);
+
+      // First create a test work
+      const workResponse = await request.post(`${API_BASE}/api/admin/works`, {
+        headers: { 'x-csrf-token': csrfToken },
+        data: {
+          title: 'Test Work for Audit',
+          projectId: testEntityId,
+          userId: testUserId,
+          status: 'pending_review',
+        },
+      });
+
+      if (workResponse.status() === 201) {
+        const work = await workResponse.json();
+
+        // Now approve the work
+        const reviewResponse = await request.post(
+          `${API_BASE}/api/admin/works/${work.id}/review`,
+          {
+            headers: { 'x-csrf-token': csrfToken },
+            data: { action: 'approve' },
+          }
+        );
+
+        expect(reviewResponse.status()).toBe(200);
+
+        // Verify audit log was created
+        const auditResponse = await request.get(
+          `${ADMIN_API_BASE}?actionType=WORK_APPROVED`
+        );
+        expect(auditResponse.status()).toBe(200);
+        const auditData = await auditResponse.json();
+
+        // Should have at least one WORK_APPROVED log
+        const hasWorkApprovalLog = auditData.logs.some(
+          (log: any) => log.action === 'WORK_APPROVED' && log.entityId === work.id
+        );
+        expect(hasWorkApprovalLog).toBe(true);
+      }
+    });
+
+    test('作品审核拒绝时应该自动记录审计日志', async ({ page, request }) => {
+      const csrfToken = await getCsrfToken(page);
+
+      // First create a test work
+      const workResponse = await request.post(`${API_BASE}/api/admin/works`, {
+        headers: { 'x-csrf-token': csrfToken },
+        data: {
+          title: 'Test Work for Reject Audit',
+          projectId: testEntityId,
+          userId: testUserId,
+          status: 'pending_review',
+        },
+      });
+
+      if (workResponse.status() === 201) {
+        const work = await workResponse.json();
+
+        // Reject the work
+        const reviewResponse = await request.post(
+          `${API_BASE}/api/admin/works/${work.id}/review`,
+          {
+            headers: { 'x-csrf-token': csrfToken },
+            data: { action: 'reject', reason: 'Not meeting requirements' },
+          }
+        );
+
+        expect(reviewResponse.status()).toBe(200);
+
+        // Verify audit log was created
+        const auditResponse = await request.get(
+          `${ADMIN_API_BASE}?actionType=WORK_REJECTED`
+        );
+        expect(auditResponse.status()).toBe(200);
+        const auditData = await auditResponse.json();
+
+        // Should have at least one WORK_REJECTED log
+        const hasWorkRejectionLog = auditData.logs.some(
+          (log: any) => log.action === 'WORK_REJECTED' && log.entityId === work.id
+        );
+        expect(hasWorkRejectionLog).toBe(true);
+      }
+    });
+
+    test('创建智能体时应该自动记录审计日志', async ({ page, request }) => {
+      const csrfToken = await getCsrfToken(page);
+      const uniqueAgentType = `test_audit_agent_${Date.now()}`;
+
+      // Create an agent
+      const agentResponse = await request.post(`${API_BASE}/api/admin/agents`, {
+        headers: { 'x-csrf-token': csrfToken },
+        data: {
+          agentType: uniqueAgentType,
+          name: 'Test Audit Agent',
+          description: 'Agent created for audit log testing',
+        },
+      });
+
+      expect(agentResponse.status()).toBe(201);
+      const agent = await agentResponse.json();
+
+      // Verify audit log was created
+      const auditResponse = await request.get(
+        `${ADMIN_API_BASE}?actionType=AGENT_CREATED&entityType=AgentConfig`
+      );
+      expect(auditResponse.status()).toBe(200);
+      const auditData = await auditResponse.json();
+
+      // Should have at least one AGENT_CREATED log
+      const hasAgentCreationLog = auditData.logs.some(
+        (log: any) =>
+          log.action === 'AGENT_CREATED' &&
+          log.entityId === agent.id
+      );
+      expect(hasAgentCreationLog).toBe(true);
+    });
+  });
 });
