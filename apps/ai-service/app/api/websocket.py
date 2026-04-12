@@ -3,7 +3,7 @@ WebSocket API endpoints for real-time communication
 """
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Depends, Header
 from typing import Optional
-import jwt
+from jose import jwt
 from app.websocket import manager
 from app.config import settings
 

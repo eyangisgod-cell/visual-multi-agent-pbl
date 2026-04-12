@@ -1,0 +1,278 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl", "debian-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username        String?   @unique @db.VarChar(50)
+  password_hash   String?   @db.VarChar(255)
+  nickname        String?   @db.VarChar(50)
+  avatar_url      String?
+  grade           Int?
+  invitation_code String    @unique @db.VarChar(10)
+  invited_by      String?   @db.Uuid
+  points          Int?      @default(0)
+  level           Int?      @default(1)
+  abilities       Json?     @default("{}")
+  created_at      DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime? @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime? @db.Timestamptz(6)
+  role            String?   @default("USER") @db.VarChar(20)
+
+  // Relations
+  works Work[]
+
+  @@index([invitation_code], map: "idx_users_invitation_code")
+  @@index([username], map: "idx_users_username")
+  @@map("users")
+}
+
+model Session {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  token       String    @unique @db.VarChar(255)
+  device_info Json?
+  ip_address  String?   @db.Inet
+  expires_at  DateTime  @db.Timestamptz(6)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([expires_at], map: "idx_sessions_expires_at")
+  @@index([token], map: "idx_sessions_token")
+  @@map("sessions")
+}
+
+model Agent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String    @db.VarChar(100)
+  agentType   String    @unique @map("agent_type") @db.VarChar(50)
+  description String?
+  personality Json?
+  skills      Json?
+  avatarUrl   String?   @map("avatar_url")
+  sprite_url  String?
+  isPlatform  Boolean?  @default(true) @map("is_platform")
+  is_active   Boolean?  @default(true)
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("agents")
+}
+
+model UserAgent {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId            String    @map("user_id") @db.Uuid
+  agentId           String    @map("agent_id") @db.Uuid
+  customName        String?   @map("custom_name") @db.VarChar(100)
+  customConfig      Json?     @map("custom_config")
+  short_term_memory Json?
+  long_term_memory  Json?
+  trust_level       Int?      @default(0)
+  usage_count       Int?      @default(0)
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@unique([userId, agentId])
+  @@index([userId], map: "idx_user_agents_user_id")
+  @@map("user_agents")
+}
+
+model Project {
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String    @db.VarChar(255)
+  description       String?
+  cover_image_url   String?
+  gradeMin          Int?      @map("grade_min")
+  gradeMax          Int?      @map("grade_max")
+  subject           String?   @db.VarChar(50)
+  tags              String[]
+  difficulty        Int?      @default(1)
+  estimated_minutes Int?
+  status            String?   @default("draft") @db.VarChar(20)
+  is_premium        Boolean?  @default(false)
+  created_by        String?   @db.Uuid
+  completed_count   Int?      @default(0)
+  like_count        Int?      @default(0)
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  works Work[]
+
+  @@index([gradeMin, gradeMax], map: "idx_projects_grade")
+  @@index([subject], map: "idx_projects_subject")
+  @@map("projects")
+}
+
+model ProjectTask {
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId       String    @map("project_id") @db.Uuid
+  title           String    @db.VarChar(255)
+  description     String?
+  orderIndex      Int       @map("order_index")
+  agentType       String?   @map("agent_type") @db.VarChar(50)
+  expected_output String?
+  rubric          Json?
+  prerequisites   String[]  @db.Uuid
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@map("project_tasks")
+}
+
+model Work {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title       String    @db.VarChar(255)
+  description String?   @db.Text
+  coverImageUrl String? @map("cover_image_url") @db.VarChar(500)
+  content     String?   @db.Text
+  status      String?   @default("draft") @db.VarChar(20)
+  score       Int?      @default(0)
+  is_premium  Boolean?  @default(false)
+  projectId   String    @map("project_id") @db.Uuid
+  userId      String    @map("user_id") @db.Uuid
+  createdAt   DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id])
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId], map: "idx_works_project_id")
+  @@index([userId], map: "idx_works_user_id")
+  @@index([status], map: "idx_works_status")
+  @@map("works")
+}
+
+model WorkComment {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  content   String    @db.Text
+  workId    String    @map("work_id") @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  parentId  String?   @map("parent_id") @db.Uuid
+  createdAt DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([workId], map: "idx_work_comments_work_id")
+  @@map("work_comments")
+}
+
+model WorkLike {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workId    String   @map("work_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([workId, userId])
+  @@index([workId], map: "idx_work_likes_work_id")
+  @@map("work_likes")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum MemoryType {
+  SHORT_TERM
+  LONG_TERM
+  EPISODIC
+  PROCEDURAL
+  SEMANTIC
+}
+
+enum EvolutionType {
+  PERSONALITY_UPDATE
+  SKILL_ACQUISITION
+  BEHAVIOR_ADJUSTMENT
+  KNOWLEDGE_EXPANSION
+  PREFERENCE_CHANGE
+}
+
+model AgentMemory {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId     String    @map("agent_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  type        MemoryType @map("type")
+  content     String    @db.Text
+  embedding   Json?     @map("embedding")
+  importance  Int?      @default(1) @map("importance")
+  tags        String[]  @map("tags")
+  metadata    Json?     @map("metadata")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt   DateTime? @map("expires_at") @db.Timestamptz(6)
+  consolidated Boolean   @default(false) @map("consolidated")
+
+  @@index([agentId], map: "idx_agent_memories_agent_id")
+  @@index([userId], map: "idx_agent_memories_user_id")
+  @@index([type], map: "idx_agent_memories_type")
+  @@index([consolidated], map: "idx_agent_memories_consolidated")
+  @@map("agent_memories")
+}
+
+model AgentEvolution {
+  id            String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId       String         @map("agent_id") @db.Uuid
+  userId        String?        @map("user_id") @db.Uuid
+  evolutionType EvolutionType  @map("evolution_type")
+  description   String         @db.Text
+  beforeState   Json?          @map("before_state")
+  afterState    Json?          @map("after_state")
+  triggerEvent  String?        @map("trigger_event") @db.Text
+  metadata      Json?          @map("metadata")
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([agentId], map: "idx_agent_evolution_agent_id")
+  @@index([userId], map: "idx_agent_evolution_user_id")
+  @@index([evolutionType], map: "idx_agent_evolution_type")
+  @@map("agent_evolution")
+}
+
+// Agent avatar configuration for customizing agent appearance
+model AgentAvatar {
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentId       String    @map("agent_id") @db.Uuid
+  userId        String?   @map("user_id") @db.Uuid
+  bodyType      String    @map("body_type") @db.VarChar(50)
+  bodyColor     String    @map("body_color") @db.VarChar(7)
+  headShape     String    @map("head_shape") @db.VarChar(50)
+  hairstyle     String    @map("hairstyle") @db.VarChar(50)
+  hairColor     String    @map("hair_color") @db.VarChar(7)
+  eyes          String    @db.VarChar(50)
+  eyeColor      String    @map("eye_color") @db.VarChar(7)
+  mouth         String    @db.VarChar(50)
+  outfit        String    @db.VarChar(50)
+  outfitColor   String    @map("outfit_color") @db.VarChar(7)
+  accessories   String[]  @db.VarChar(255)
+  metadata      Json?     @map("metadata")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @map("updated_at") @updatedAt @db.Timestamptz(6)
+
+  @@unique([agentId, userId])
+  @@index([agentId], map: "idx_agent_avatar_agent_id")
+  @@index([userId], map: "idx_agent_avatar_user_id")
+  @@map("agent_avatars")
+}
+
+model AuditLog {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action      String    @db.VarChar(100)
+  entityType  String?   @map("entity_type") @db.VarChar(50)
+  entityId    String?   @map("entity_id") @db.Uuid
+  userId      String?   @map("user_id") @db.Uuid
+  username    String?   @map("username") @db.VarChar(50)
+  metadata    Json?     @map("metadata")
+  ipAddress   String?   @map("ip_address") @db.VarChar(45)
+  userAgent   String?   @map("user_agent") @db.VarChar(500)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([action], map: "idx_audit_logs_action")
+  @@index([entityType], map: "idx_audit_logs_entity_type")
+  @@index([entityId], map: "idx_audit_logs_entity_id")
+  @@index([userId], map: "idx_audit_logs_user_id")
+  @@index([createdAt], map: "idx_audit_logs_created_at")
+  @@map("audit_logs")
+}

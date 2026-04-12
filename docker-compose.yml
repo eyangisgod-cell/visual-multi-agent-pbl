@@ -1,8 +1,16 @@
 # docker-compose.yml (根目录)
-# 快捷方式，链接到 docker/docker-compose.dev.yml
-# 使用方式：docker-compose up -d
+# 统一入口配置文件
 #
-# 完整配置请见 docker/docker-compose.dev.yml
+# 使用方式：
+#   开发环境：docker-compose up -d
+#   生产环境：docker-compose -f docker/docker-compose.prod.yml up -d
+#   指定镜像标签：IMAGE_TAG=v1.0 docker-compose up -d
+#
+# 镜像命名：
+#   - pbl-web:dev
+#   - pbl-ai-service:dev
+#
+# 清理构建缓存：docker builder prune -f
 
 include:
   - docker/docker-compose.dev.yml

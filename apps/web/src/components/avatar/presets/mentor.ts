@@ -2,7 +2,7 @@ import type { AvatarPreset } from '../types'
 
 export const mentor: AvatarPreset = {
   id: 'mentor',
-  name: '导师',
+  name: '智慧导师',
   description: '经验丰富的学习导师，温和而智慧',
   config: {
     bodyType: 'average',

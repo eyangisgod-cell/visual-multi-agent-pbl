@@ -2,9 +2,12 @@ version: '3.8'
 
 services:
   web:
+    image: ${DOCKER_REGISTRY:-}pbl-web:${IMAGE_TAG:-latest}
     build:
       context: ../apps/web
       dockerfile: Dockerfile.prod
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     ports:
       - "3000:3000"
     environment:
@@ -32,9 +35,12 @@ services:
       start_period: 40s
 
   ai-service:
+    image: ${DOCKER_REGISTRY:-}pbl-ai-service:${IMAGE_TAG:-latest}
     build:
       context: ../apps/ai-service
       dockerfile: Dockerfile.prod
+      args:
+        - BUILDKIT_INLINE_CACHE=1
     ports:
       - "8000:8000"
     environment:

@@ -2,7 +2,7 @@ import type { AvatarPreset } from '../types'
 
 export const designer: AvatarPreset = {
   id: 'designer',
-  name: '设计师',
+  name: '创意设计师',
   description: '富有创造力的设计专家，充满艺术气息',
   config: {
     bodyType: 'curvy',

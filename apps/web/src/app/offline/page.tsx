@@ -1,4 +1,35 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+
 export default function OfflinePage() {
+  const [isOnline, setIsOnline] = useState(true)
+
+  useEffect(() => {
+    // Set page title
+    document.title = '离线模式 | Visual PBL'
+
+    setIsOnline(navigator.onLine)
+
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  const handleReconnect = () => {
+    window.location.reload()
+  }
+
+  const handleGoBack = () => {
+    window.history.back()
+  }
   return (
     <div className="min-h-screen bg-gradient-to-b from-indigo-50 to-white flex flex-col items-center justify-center p-4">
       <div className="text-center max-w-md">
@@ -36,14 +67,14 @@ export default function OfflinePage() {
         {/* Action Buttons */}
         <div className="space-y-3">
           <button
-            onClick={() => window.location.reload()}
+            onClick={handleReconnect}
             className="w-full px-6 py-3 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors shadow-md"
           >
             重新连接
           </button>
 
           <button
-            onClick={() => window.history.back()}
+            onClick={handleGoBack}
             className="w-full px-6 py-3 bg-white text-indigo-600 font-medium rounded-lg border-2 border-indigo-200 hover:bg-indigo-50 transition-colors"
           >
             返回上一页

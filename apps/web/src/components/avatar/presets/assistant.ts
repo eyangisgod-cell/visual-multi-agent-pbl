@@ -2,7 +2,7 @@ import type { AvatarPreset } from '../types'
 
 export const assistant: AvatarPreset = {
   id: 'assistant',
-  name: '助手',
+  name: 'CEO 助手',
   description: '可靠的全能助手，友好且乐于助人',
   config: {
     bodyType: 'average',

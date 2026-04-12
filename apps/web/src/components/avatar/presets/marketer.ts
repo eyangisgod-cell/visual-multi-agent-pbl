@@ -2,7 +2,7 @@ import type { AvatarPreset } from '../types'
 
 export const marketer: AvatarPreset = {
   id: 'marketer',
-  name: '营销专家',
+  name: '运营推广师',
   description: '善于沟通的营销专家，热情而有感染力',
   config: {
     bodyType: 'athletic',
