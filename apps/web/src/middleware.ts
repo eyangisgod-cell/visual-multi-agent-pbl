@@ -54,6 +54,20 @@ const CSRF_EXCLUDED_PATHS = [
 // Safe HTTP methods that don't require CSRF
 const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 
+// Admin API paths that require authentication and role-based access
+const ADMIN_API_PATHS = [
+  '/api/admin',
+]
+
+// Permission requirements for specific paths (future enhancement)
+const PATH_PERMISSIONS: Record<string, string[]> = {
+  '/api/admin/users': ['view_users'],
+  '/api/admin/projects': ['view_projects'],
+  '/api/admin/works': ['view_works'],
+  '/api/admin/agents': ['view_agents'],
+  '/api/admin/roles': ['view_roles'],
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -102,6 +116,42 @@ export function middleware(request: NextRequest) {
         { error: 'CSRF token validation failed' },
         { status: 403 }
       )
+    }
+  }
+
+  // Admin API paths - require authentication and role-based access
+  if (ADMIN_API_PATHS.some(path => pathname.startsWith(path))) {
+    const sessionToken = request.cookies.get('session-token')?.value
+    const userRole = request.cookies.get('user-role')?.value
+
+    // Check if user is authenticated
+    if (!sessionToken) {
+      console.log('[RBAC] Unauthenticated access attempt to admin API', {
+        path: pathname,
+        ip: request.ip || 'unknown',
+        method: request.method
+      })
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      )
+    }
+
+    // For non-GET methods, verify user has admin-level role
+    if (!SAFE_METHODS.includes(request.method)) {
+      const allowedRoles = ['super_admin', 'admin']
+      if (!userRole || !allowedRoles.includes(userRole)) {
+        console.log('[RBAC] Insufficient role for admin API', {
+          path: pathname,
+          role: userRole || 'none',
+          ip: request.ip || 'unknown',
+          method: request.method
+        })
+        return NextResponse.json(
+          { error: 'Insufficient permissions' },
+          { status: 403 }
+        )
+      }
     }
   }
 

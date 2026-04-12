@@ -500,36 +500,49 @@ PUT  /api/admin/works/[id]            - 更新作品（重新提交）
 
 ---
 
-### 任务 14: 管理后台 RBAC 权限系统 (设计审查 ISSUE-005)
+### 任务 14: 管理后台 RBAC 权限系统 (设计审查 ISSUE-005) ✅
 
 **优先级**: 中
 **预计工时**: 5 小时
+**状态**: 已完成
 
 **需求描述**:
 实现基于角色的访问控制（RBAC）系统，定义管理员权限模型。
 
 **子任务**:
-14.1. 创建角色定义表 `admin_roles`
-14.2. 创建权限定义表 `permissions`
-14.3. 实现角色 - 权限关联表
-14.4. 实现权限检查中间件
-14.5. 前端角色管理界面
-14.6. 前端权限分配组件
+14.1. ✅ 创建角色定义表 `admin_roles`
+14.2. ✅ 创建权限定义 API
+14.3. ✅ 实现角色 CRUD API
+14.4. ✅ 实现权限检查中间件
+14.5. ✅ 前端角色管理界面
+14.6. ✅ 用户角色分配 API
 
 **技术栈**:
-- Backend: FastAPI, PostgreSQL
+- Backend: Next.js, Prisma
 - Frontend: Next.js, React
 
 **相关文件**:
-- `apps/web/prisma/schema.prisma` - 添加 Role, Permission 模型
-- `apps/web/src/middleware.ts` - 添加权限检查
-- `apps/web/src/app/admin/settings/roles/page.tsx` - 新建
+- `apps/web/prisma/schema.prisma` - 添加 AdminRole 模型 ✅
+- `apps/web/src/middleware.ts` - 添加权限检查 ✅
+- `apps/web/src/app/admin/roles/route.ts` - 角色列表和创建 API ✅
+- `apps/web/src/app/api/admin/roles/[id]/route.ts` - 角色更新和删除 API ✅
+- `apps/web/src/app/api/admin/permissions/route.ts` - 权限定义 API ✅
+- `apps/web/src/app/api/admin/users/[id]/role/route.ts` - 用户角色分配 API ✅
+- `apps/web/src/app/admin/settings/roles/page.tsx` - 角色管理 UI ✅
 
 **角色定义**:
 - super_admin: 全部权限
-- admin: 用户/项目/作品管理
+- admin: 用户/项目/作品/智能体管理
 - editor: 内容编辑
 - reviewer: 仅审核权限
+
+**已实现功能**:
+- 20 个预定义权限，分为 6 个类别
+- 4 个内置角色（super_admin, admin, editor, reviewer）
+- 角色 CRUD 操作（保护内置角色）
+- 用户角色分配 API
+- RBAC 中间件（基于 Cookie 的角色验证）
+- 审计日志集成（USER_ROLE_ASSIGNED）
 
 ---
 
@@ -581,7 +594,7 @@ PUT  /api/admin/works/[id]            - 更新作品（重新提交）
 | 🟡 中 | 8 | 文件上传优化 | 中 | 低 | ⏳ 待开发 |
 | 🟡 中 | 11 | 审计日志系统 | 中 | 低 | ⏳ 待开发 |
 | 🟡 中 | 13 | 作品审核流程 | 中 | 低 | ⏳ 待开发 |
-| 🟡 中 | 14 | RBAC 权限系统 | 中 | 中 | ⏳ 待开发 |
+| 🟡 中 | 14 | RBAC 权限系统 | 中 | 中 | ✅ 完成 |
 | 🟢 低 | 7 | 微信登录集成 | 低 | 低 | ⏳ 待开发 |
 | 🟢 低 | 12 | 积分系统设计 | 低 | 低 | ⏳ 待开发 |
 

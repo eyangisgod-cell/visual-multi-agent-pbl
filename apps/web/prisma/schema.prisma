@@ -344,6 +344,20 @@ model SecurityLog {
   @@map("security_logs")
 }
 
+// RBAC 角色表
+model AdminRole {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique @db.VarChar(50)
+  description String?  @db.Text
+  permissions Json?    @default("[]") @db.JsonB // 权限 key 数组
+  isBuiltIn   Boolean  @default(false) @map("is_built_in")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([name], map: "idx_admin_roles_name")
+  @@map("admin_roles")
+}
+
 enum Role {
   USER
   ADMIN

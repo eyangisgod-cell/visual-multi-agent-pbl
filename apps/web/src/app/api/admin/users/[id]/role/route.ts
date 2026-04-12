@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { createAuditLog, extractIpAddress, extractUserAgent } from '@/lib/audit-logger';
 
 const prisma = new PrismaClient();
 
-// PUT /api/admin/users/[id]/role - 更新用户角色
-export async function PUT(
+// POST /api/admin/users/[id]/role - 给用户分配角色
+export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
@@ -12,41 +13,73 @@ export async function PUT(
     const body = await request.json();
     const { role } = body;
 
-    if (!role || !['USER', 'ADMIN'].includes(role)) {
+    // 验证必填字段
+    if (!role || typeof role !== 'string' || role.trim() === '') {
       return NextResponse.json(
-        { error: 'Invalid role. Must be USER or ADMIN' },
+        { error: 'Role is required' },
         { status: 400 }
       );
     }
 
-    const existingUser = await prisma.user.findUnique({
+    const trimmedRole = role.trim();
+
+    // 验证角色是否存在
+    const existingRole = await prisma.adminRole.findUnique({
+      where: { name: trimmedRole },
+    });
+
+    if (!existingRole) {
+      return NextResponse.json(
+        { error: 'Role does not exist' },
+        { status: 400 }
+      );
+    }
+
+    // 查找用户
+    const user = await prisma.user.findUnique({
       where: { id: params.id },
     });
 
-    if (!existingUser) {
+    if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       );
     }
 
+    // 更新用户角色
     const updatedUser = await prisma.user.update({
       where: { id: params.id },
-      data: { role },
-      select: {
-        id: true,
-        username: true,
-        nickname: true,
-        role: true,
-        updatedAt: true,
-      },
+      data: { role: trimmedRole },
     });
 
-    return NextResponse.json(updatedUser);
+    // 创建审计日志
+    await createAuditLog({
+      action: 'USER_ROLE_ASSIGNED',
+      entityType: 'User',
+      entityId: user.id,
+      userId: user.id,
+      username: user.username,
+      metadata: {
+        previousRole: user.role,
+        newRole: trimmedRole,
+        roleName: existingRole.name,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    });
+
+    return NextResponse.json({
+      user: {
+        id: updatedUser.id,
+        username: updatedUser.username,
+        role: updatedUser.role,
+      },
+    });
   } catch (error) {
-    console.error('Error updating user role:', error);
+    console.error('Error assigning user role:', error);
     return NextResponse.json(
-      { error: 'Failed to update user role' },
+      { error: 'Failed to assign user role' },
       { status: 500 }
     );
   }
