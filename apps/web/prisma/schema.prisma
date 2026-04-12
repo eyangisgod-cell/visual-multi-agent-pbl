@@ -28,6 +28,7 @@ model User {
   comments        WorkComment[]
   assignedTasks   ProjectTask[] @relation("AssignedTasks")
   likes           WorkLike[]
+  WorkReview      WorkReview[]
 
   @@index([invitation_code], map: "idx_users_invitation_code")
   @@index([username], map: "idx_users_username")
@@ -83,24 +84,24 @@ model UserAgent {
 }
 
 model Project {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title             String    @db.VarChar(255)
+  id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title             String        @db.VarChar(255)
   description       String?
   cover_image_url   String?
-  gradeMin          Int?      @map("grade_min")
-  gradeMax          Int?      @map("grade_max")
-  subject           String?   @db.VarChar(50)
+  gradeMin          Int?          @map("grade_min")
+  gradeMax          Int?          @map("grade_max")
+  subject           String?       @db.VarChar(50)
   tags              String[]
-  difficulty        Int?      @default(1)
+  difficulty        Int?          @default(1)
   estimated_minutes Int?
-  status            String?   @default("draft") @db.VarChar(20)
-  is_premium        Boolean?  @default(false)
-  created_by        String?   @db.Uuid
-  completed_count   Int?      @default(0)
-  like_count        Int?      @default(0)
-  rubricCriteria    Json?     @map("rubric_criteria")
-  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  status            String?       @default("draft") @db.VarChar(20)
+  is_premium        Boolean?      @default(false)
+  created_by        String?       @db.Uuid
+  completed_count   Int?          @default(0)
+  like_count        Int?          @default(0)
+  rubricCriteria    Json?         @map("rubric_criteria")
+  createdAt         DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   tasks             ProjectTask[]
   works             Work[]
 
@@ -110,24 +111,24 @@ model Project {
 }
 
 model ProjectTask {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId       String    @map("project_id") @db.Uuid
-  title           String    @db.VarChar(255)
-  description     String?
-  orderIndex      Int       @map("order_index")
-  agentType       String?   @map("agent_type") @db.VarChar(50)
-  expected_output String?
-  rubric          Json?
-  prerequisites   String[]  @db.Uuid
-  assignedTo      String?   @map("assigned_to") @db.Uuid
-  dueDate         DateTime? @map("due_date") @db.Timestamptz(6)
-  status          String?   @default("todo") @db.VarChar(20)
-  rubricScores    Json?     @map("rubric_scores")
-  submissionContent String? @map("submission_content") @db.Text
-  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  project         Project   @relation(fields: [projectId], references: [id])
-  assignedUser    User?     @relation(fields: [assignedTo], references: [id], name: "AssignedTasks")
+  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId         String    @map("project_id") @db.Uuid
+  title             String    @db.VarChar(255)
+  description       String?
+  orderIndex        Int       @map("order_index")
+  agentType         String?   @map("agent_type") @db.VarChar(50)
+  expected_output   String?
+  rubric            Json?
+  prerequisites     String[]  @db.Uuid
+  assignedTo        String?   @map("assigned_to") @db.Uuid
+  dueDate           DateTime? @map("due_date") @db.Timestamptz(6)
+  status            String?   @default("todo") @db.VarChar(20)
+  rubricScores      Json?     @map("rubric_scores")
+  submissionContent String?   @map("submission_content") @db.Text
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  project           Project   @relation(fields: [projectId], references: [id])
+  assignedUser      User?     @relation(fields: [assignedTo], references: [id], name: "AssignedTasks")
 
   @@index([projectId], map: "idx_project_tasks_project_id")
   @@index([assignedTo], map: "idx_project_tasks_assigned_to")
@@ -151,6 +152,7 @@ model Work {
   user          User          @relation(fields: [userId], references: [id])
   comments      WorkComment[]
   likes         WorkLike[]
+  reviews       WorkReview[]
 
   @@index([projectId], map: "idx_works_project_id")
   @@index([userId], map: "idx_works_user_id")
@@ -186,6 +188,22 @@ model WorkLike {
   @@unique([workId, userId])
   @@index([workId], map: "idx_work_likes_work_id")
   @@map("work_likes")
+}
+
+model WorkReview {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  workId    String   @map("work_id") @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  rating    Int?     @map("rating") @db.Integer // 1-5 分，可选
+  comment   String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([workId], map: "idx_work_reviews_work_id")
+  @@index([userId], map: "idx_work_reviews_user_id")
+  @@map("work_reviews")
 }
 
 model AgentMemory {
@@ -254,14 +272,14 @@ model AgentAvatar {
 
 // LLM 配置表
 model LlmConfig {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  provider    String   @unique @db.VarChar(50)
-  apiKey      String   @db.VarChar(500)
-  baseUrl     String?  @db.VarChar(500)
-  models      Json?
-  isActive    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  provider  String   @unique @db.VarChar(50)
+  apiKey    String   @db.VarChar(500)
+  baseUrl   String?  @db.VarChar(500)
+  models    Json?
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   @@index([provider], map: "idx_llm_configs_provider")
   @@map("llm_configs")
@@ -307,8 +325,8 @@ model AuditLog {
 // 安全日志表 - 记录安全相关事件
 model SecurityLog {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  eventType   String   @map("event_type") @db.VarChar(50)  // sql_injection, xss, csrf_failure, rate_limit, auth_failure
-  severity    String   @db.VarChar(20)  // low, medium, high, critical
+  eventType   String   @map("event_type") @db.VarChar(50) // sql_injection, xss, csrf_failure, rate_limit, auth_failure
+  severity    String   @db.VarChar(20) // low, medium, high, critical
   description String   @db.Text
   ipAddress   String?  @map("ip_address") @db.VarChar(45)
   userAgent   String?  @map("user_agent") @db.VarChar(500)
