@@ -12,6 +12,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
+from app.utils.security_log import security_log, SecurityEventType, SecuritySeverity
+
 
 class CSRFMiddleware(BaseHTTPMiddleware):
     """
@@ -72,6 +74,11 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next):
         """Process request with CSRF protection."""
+        # Get client IP for logging
+        forwarded_for = request.headers.get("x-forwarded-for")
+        client_ip = forwarded_for.split(",")[0].strip() if forwarded_for else (request.client.host if request.client else "unknown")
+        request_path = request.url.path
+
         # Skip CSRF checks for excluded paths
         if self._is_path_excluded(request.url.path):
             response = await call_next(request)
@@ -101,6 +108,13 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         # If no cookie token, generate one and reject the request
         if not cookie_token:
+            # Log CSRF failure
+            security_log.log_csrf_failure(
+                ip_address=client_ip,
+                request_path=request_path,
+                reason="No CSRF token in cookie"
+            )
+
             response = JSONResponse(
                 status_code=status.HTTP_403_FORBIDDEN,
                 content={
@@ -123,6 +137,13 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         # If no header token, reject
         if not header_token:
+            # Log CSRF failure
+            security_log.log_csrf_failure(
+                ip_address=client_ip,
+                request_path=request_path,
+                reason="No CSRF token in header"
+            )
+
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"CSRF token missing. Please send {self.header_name} header with your request."
@@ -130,6 +151,13 @@ class CSRFMiddleware(BaseHTTPMiddleware):
 
         # Compare tokens using constant-time comparison
         if not secrets.compare_digest(cookie_token, header_token):
+            # Log CSRF failure - token mismatch
+            security_log.log_csrf_failure(
+                ip_address=client_ip,
+                request_path=request_path,
+                reason="CSRF token mismatch"
+            )
+
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="CSRF token validation failed. Token mismatch."

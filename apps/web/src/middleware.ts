@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * - CSRF token validation for API routes
  * - Rate limiting headers
  * - Input validation
+ * - Security event logging
  */
 
 // Security headers configuration
@@ -80,11 +81,23 @@ export function middleware(request: NextRequest) {
         path: '/',
         maxAge: 3600 // 1 hour
       })
+      // Log CSRF failure
+      console.log('[SECURITY] CSRF token missing in cookie', {
+        path: pathname,
+        ip: request.ip || 'unknown',
+        method: request.method
+      })
       return response
     }
 
     // Validate CSRF token
     if (!csrfToken || csrfToken !== cookieToken) {
+      // Log CSRF failure
+      console.log('[SECURITY] CSRF token validation failed', {
+        path: pathname,
+        ip: request.ip || 'unknown',
+        method: request.method
+      })
       return NextResponse.json(
         { error: 'CSRF token validation failed' },
         { status: 403 }

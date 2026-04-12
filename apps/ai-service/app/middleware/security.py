@@ -16,6 +16,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.types import ASGIApp
 
+from app.utils.security_log import security_log, SecurityEventType, SecuritySeverity
+
 
 # SQL Injection patterns to detect
 SQL_INJECTION_PATTERNS = [
@@ -77,12 +79,14 @@ def sanitize_input(value: str) -> str:
     return sanitized
 
 
-def detect_sql_injection(value: str) -> bool:
+def detect_sql_injection(value: str, ip_address: str = None, request_path: str = None) -> bool:
     """
     Detect potential SQL injection attempts.
 
     Args:
         value: Input string to check
+        ip_address: Client IP address for logging
+        request_path: Request path for logging
 
     Returns:
         True if SQL injection pattern detected
@@ -92,17 +96,26 @@ def detect_sql_injection(value: str) -> bool:
 
     for pattern in SQL_INJECTION_REGEX:
         if pattern.search(value):
+            # Log the attempt
+            if ip_address and request_path:
+                security_log.log_sql_injection(
+                    ip_address=ip_address,
+                    request_path=request_path,
+                    payload=value[:500]  # Truncate long payloads
+                )
             return True
 
     return False
 
 
-def detect_xss(value: str) -> bool:
+def detect_xss(value: str, ip_address: str = None, request_path: str = None) -> bool:
     """
     Detect potential XSS attempts.
 
     Args:
         value: Input string to check
+        ip_address: Client IP address for logging
+        request_path: Request path for logging
 
     Returns:
         True if XSS pattern detected
@@ -112,6 +125,13 @@ def detect_xss(value: str) -> bool:
 
     for pattern in XSS_REGEX:
         if pattern.search(value):
+            # Log the attempt
+            if ip_address and request_path:
+                security_log.log_xss_attempt(
+                    ip_address=ip_address,
+                    request_path=request_path,
+                    payload=value[:500]  # Truncate long payloads
+                )
             return True
 
     return False

@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     # JWT
     JWT_SECRET: str = Field(default="visual-pbl-jwt-secret-key-change-in-production", env="JWT_SECRET")
 
+    # Encryption key for sensitive data (Fernet key, base64-encoded)
+    ENCRYPTION_KEY: Optional[str] = Field(default=None, env="ENCRYPTION_KEY")
+
     # LLM
     LLM_PROVIDER: str = "mock"
     LLM_API_KEY: Optional[str] = None

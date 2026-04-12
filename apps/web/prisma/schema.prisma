@@ -304,6 +304,28 @@ model AuditLog {
   @@map("audit_logs")
 }
 
+// 安全日志表 - 记录安全相关事件
+model SecurityLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  eventType   String   @map("event_type") @db.VarChar(50)  // sql_injection, xss, csrf_failure, rate_limit, auth_failure
+  severity    String   @db.VarChar(20)  // low, medium, high, critical
+  description String   @db.Text
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent") @db.VarChar(500)
+  userId      String?  @map("user_id") @db.Uuid
+  requestPath String?  @map("request_path") @db.VarChar(500)
+  requestBody Json?    @map("request_body")
+  metadata    Json?    @map("metadata")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([eventType], map: "idx_security_logs_event_type")
+  @@index([severity], map: "idx_security_logs_severity")
+  @@index([ipAddress], map: "idx_security_logs_ip_address")
+  @@index([userId], map: "idx_security_logs_user_id")
+  @@index([createdAt], map: "idx_security_logs_created_at")
+  @@map("security_logs")
+}
+
 enum Role {
   USER
   ADMIN

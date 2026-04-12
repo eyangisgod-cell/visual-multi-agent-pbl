@@ -12,6 +12,8 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 import redis.asyncio as redis
 
+from app.utils.security_log import security_log, SecurityEventType, SecuritySeverity
+
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """
@@ -111,6 +113,14 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
 
         if is_limited:
+            # Log rate limit exceeded
+            security_log.log_rate_limit_exceeded(
+                ip_address=client_ip,
+                request_path=request.url.path,
+                request_count=self.requests_per_minute,
+                limit=self.requests_per_minute
+            )
+
             # Return 429 Too Many Requests
             return JSONResponse(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
