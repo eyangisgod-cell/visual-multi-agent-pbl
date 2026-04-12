@@ -344,20 +344,21 @@ POST   /api/v1/rag/query              - RAG 查询
 
 ---
 
-### 任务 11: 审计日志系统 (设计审查 ISSUE-002)
+### 任务 11: 审计日志系统 (设计审查 ISSUE-002) ✅
 
 **优先级**: 中
 **预计工时**: 3 小时
+**状态**: 已完成
 
 **需求描述**:
 实现审计日志功能，记录所有管理操作，便于追溯和合规审计。
 
 **子任务**:
-11.1. 创建 `audit_logs` 数据库表
-11.2. 实现审计日志写入 API
-11.3. 实现审计日志查询 API（支持按管理员/实体/时间筛选）
-11.4. 在管理后台关键操作处集成日志记录
-11.5. 前端审计日志查看界面
+11.1. ✅ 创建 `audit_logs` 数据库表
+11.2. ✅ 实现审计日志写入 API
+11.3. ✅ 实现审计日志查询 API（支持按管理员/实体/时间筛选）
+11.4. ✅ 在管理后台关键操作处集成日志记录
+11.5. ✅ 前端审计日志查看界面
 
 **技术栈**:
 - Backend: FastAPI, PostgreSQL
@@ -367,6 +368,7 @@ POST   /api/v1/rag/query              - RAG 查询
 - `apps/web/prisma/schema.prisma` - 添加 AuditLog 模型
 - `apps/web/src/app/api/admin/audit-logs/route.ts` - 新建
 - `apps/web/src/app/admin/audit-logs/page.tsx` - 新建
+- `apps/web/src/lib/audit-logger.ts` - 新建 (审计日志工具函数)
 
 **数据库表结构**:
 ```sql
@@ -383,6 +385,15 @@ CREATE TABLE audit_logs (
     created_at TIMESTAMP WITH TIME ZONE
 );
 ```
+
+**已集成审计日志的 API**:
+- `POST /api/admin/works/[id]/review` - 作品审核 (WORK_APPROVED, WORK_REJECTED)
+- `POST /api/admin/agents` - 创建智能体 (AGENT_CREATED)
+- `PUT /api/admin/agents/[id]` - 更新智能体 (UPDATE_AGENT)
+- `DELETE /api/admin/agents/[id]` - 删除智能体 (DELETE_AGENT)
+- `POST /api/admin/users` - 创建用户 (CREATE_USER)
+- `POST /api/admin/projects` - 创建项目 (PROJECT_CREATED)
+- `POST /api/admin/works` - 创建作品 (CREATE_WORK)
 
 ---
 
