@@ -132,41 +132,54 @@ GET    /api/works/[id]/like/status    - 检查用户点赞状态
 
 ---
 
-### 任务 3: 智能体实时对话系统 (Phase 4 扩展)
+### 任务 3: 智能体实时对话系统 (Phase 4 扩展) ✅
 
 **优先级**: 高
 **预计工时**: 8 小时
+**状态**: 已完成
 
 **需求描述**:
 实现学生与智能体的实时对话功能，支持多轮对话和上下文理解。
 
 **子任务**:
-3.1. 完善 WebSocket 消息协议
-3.2. 实现对话历史存储
-3.3. 实现对话上下文管理
-3.4. 实现多智能体协同对话
-3.5. 前端对话界面开发
-3.6. 实现对话气泡动画
+3.1. ✅ 创建对话数据库模型（Conversation, Message）
+3.2. ✅ 实现对话历史存储 API
+3.3. ✅ 实现对话上下文管理
+3.4. ✅ 前端对话界面组件
+3.5. ✅ 使用 useConversation Hook 管理状态
 
 **技术栈**:
-- Backend: FastAPI WebSocket, AG2
-- Frontend: React, WebSocket
+- Backend: Next.js API Routes, Prisma
+- Frontend: React, TypeScript
 
 **相关文件**:
-- `apps/ai-service/app/api/websocket.py` - 扩展
-- `apps/web/src/components/chat/ChatInterface.tsx` - 新建
-- `apps/web/src/hooks/useConversation.ts` - 新建
+- `apps/web/prisma/schema.prisma` - 添加 Conversation, Message, MessageRole 模型 ✅
+- `apps/web/src/app/api/conversations/route.ts` - 对话列表和创建 API ✅
+- `apps/web/src/app/api/conversations/[id]/route.ts` - 对话详情和删除 API ✅
+- `apps/web/src/app/api/conversations/[id]/messages/route.ts` - 消息列表和发送 API ✅
+- `apps/web/src/app/api/messages/[id]/route.ts` - 消息更新和删除 API ✅
+- `apps/web/src/components/chat/ChatInterface.tsx` - 对话界面组件 ✅
+- `apps/web/src/hooks/useConversation.ts` - 对话管理 Hook ✅
+- `apps/web/tests/e2e/chat-conversation.spec.ts` - 11 个 E2E 测试 ✅
 
 **消息协议**:
 ```typescript
-interface ChatMessage {
-  type: 'user_message' | 'agent_response' | 'system';
-  agentId: string;
+interface Message {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
   content: string;
-  timestamp: string;
-  context?: Record<string, any>;
+  createdAt: string;
 }
 ```
+
+**已实现功能**:
+- 对话 CRUD 操作（创建、列表、详情、删除）
+- 消息 CRUD 操作（发送、列表、更新、删除）
+- 对话上下文连续性（消息按时间排序）
+- 消息验证（空内容、无效角色）
+- 审计日志集成（CONVERSATION_CREATED, MESSAGE_DELETED）
+- 前端对话界面（实时显示、加载状态、气泡动画）
+- useConversation Hook（状态管理、API 封装）
 
 ---
 
@@ -583,7 +596,7 @@ PUT  /api/admin/works/[id]            - 更新作品（重新提交）
 | 优先级 | 任务编号 | 任务名称 | 业务价值 | 技术复杂度 | 状态 |
 |--------|---------|---------|---------|-----------|------|
 | 🔴 高 | 1 | 记忆系统向量搜索优化 | 高 | 中 | ✅ 完成 |
-| 🔴 高 | 3 | 智能体实时对话系统 | 高 | 高 | ⏳ 待开发 |
+| 🔴 高 | 3 | 智能体实时对话系统 | 高 | 高 | ✅ 完成 |
 | 🔴 高 | 4 | RAG 知识库系统 | 高 | 高 | ⏳ 待开发 |
 | 🔴 高 | 9 | 性能优化专项 | 中 | 中 | ⏳ 待开发 |
 | 🔴 高 | 10 | 安全加固专项 | 高 | 中 | ✅ 完成 |

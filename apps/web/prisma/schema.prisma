@@ -358,6 +358,37 @@ model AdminRole {
   @@map("admin_roles")
 }
 
+// 对话表 - 用于存储用户与智能体的对话历史
+model Conversation {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  agentId   String    @map("agent_id") @db.Uuid
+  title     String?   @db.VarChar(255)
+  metadata  Json?     @map("metadata")
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  messages  Message[]
+
+  @@index([userId], map: "idx_conversations_user_id")
+  @@index([agentId], map: "idx_conversations_agent_id")
+  @@map("conversations")
+}
+
+// 消息表 - 存储对话中的具体消息
+model Message {
+  id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId String       @map("conversation_id") @db.Uuid
+  role           MessageRole  // user, assistant, system
+  content        String       @db.Text
+  metadata       Json?        @map("metadata")
+  createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId], map: "idx_messages_conversation_id")
+  @@index([createdAt], map: "idx_messages_created_at")
+  @@map("messages")
+}
+
 enum Role {
   USER
   ADMIN
@@ -377,4 +408,10 @@ enum EvolutionType {
   BEHAVIOR_ADJUSTMENT
   KNOWLEDGE_EXPANSION
   PREFERENCE_CHANGE
+}
+
+enum MessageRole {
+  user
+  assistant
+  system
 }
