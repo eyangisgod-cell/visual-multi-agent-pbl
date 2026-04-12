@@ -74,40 +74,61 @@ POST /api/v1/memory/search (当前：ILIKE)
 
 ---
 
-### 任务 2: 作品评价系统集成 (Task #157 扩展)
+### 任务 2: 作品评价系统集成 (Task #157 扩展) ✅
 
 **优先级**: 中
 **预计工时**: 6 小时
+**状态**: 已完成
 
 **需求描述**:
 完善作品系统的评价功能，包括评分、评论、点赞等。
 
 **子任务**:
-2.1. 创建作品评价数据库表
-2.2. 实现评价 CRUD API
-2.3. 实现作品评分聚合功能
-2.4. 实现评论嵌套回复功能
-2.5. 实现点赞/取消点赞功能
-2.6. 前端评价组件开发
+2.1. ✅ 创建作品评价数据库表 (WorkReview 模型)
+2.2. ✅ 实现评价 CRUD API
+2.3. ✅ 实现作品评分聚合功能
+2.4. ⏳ 实现评论嵌套回复功能 (已有 WorkComment 模型，待实现 API)
+2.5. ✅ 实现点赞/取消点赞功能
+2.6. ⏳ 前端评价组件开发
 
 **技术栈**:
-- Backend: FastAPI, PostgreSQL
+- Backend: Next.js, Prisma, PostgreSQL
 - Frontend: Next.js, React
 
 **相关文件**:
-- `apps/web/prisma/schema.prisma` - 添加 WorkReview 模型
-- `apps/web/src/app/api/works/[id]/reviews/route.ts` - 新建
-- `apps/ai-service/app/api/reviews.py` - 新建
+- `apps/web/prisma/schema.prisma` - 添加 WorkReview 模型 ✅
+- `apps/web/src/app/api/works/[id]/reviews/route.ts` - 新建 ✅
+- `apps/web/src/app/api/works/[id]/reviews/stats/route.ts` - 新建 ✅
+- `apps/web/src/app/api/reviews/[id]/route.ts` - 新建 ✅
+- `apps/web/src/app/api/works/[id]/like/route.ts` - 新建 ✅
+- `apps/web/src/app/api/works/[id]/like/status/route.ts` - 新建 ✅
+- `apps/web/src/app/api/works/[id]/likes/route.ts` - 新建 ✅
 
 **API 端点**:
 ```
-GET    /api/works/[id]/reviews     - 获取作品评价
-POST   /api/works/[id]/reviews     - 创建评价
-PUT    /api/reviews/[id]           - 更新评价
-DELETE /api/reviews/[id]           - 删除评价
-POST   /api/works/[id]/like        - 点赞作品
-POST   /api/works/[id]/bookmark    - 收藏作品
+GET    /api/works/[id]/reviews        - 获取作品评价列表
+POST   /api/works/[id]/reviews        - 创建作品评价
+GET    /api/works/[id]/reviews/stats  - 获取评分统计
+PUT    /api/reviews/[id]              - 更新评价
+DELETE /api/reviews/[id]              - 删除评价
+POST   /api/works/[id]/like           - 点赞/取消点赞
+GET    /api/works/[id]/likes          - 获取点赞数
+GET    /api/works/[id]/like/status    - 检查用户点赞状态
 ```
+
+**已完成功能**:
+- 评分系统（1-5 分，可选）
+- 评论功能（必填）
+- 用户只能评价一次
+- 用户只能更新/删除自己的评价
+- 评分聚合统计（平均分、总分、评分分布）
+- 点赞/取消点赞切换
+- 审计日志集成
+
+**待完成功能**:
+- 前端评价组件
+- 评论嵌套回复 API (WorkComment)
+- 收藏作品功能
 
 ---
 
