@@ -449,33 +449,53 @@ CREATE TABLE audit_logs (
 
 ---
 
-### 任务 13: 作品审核流程完善 (设计审查 ISSUE-003)
+### 任务 13: 作品审核流程完善 (设计审查 ISSUE-003) ✅
 
 **优先级**: 中
 **预计工时**: 3 小时
+**状态**: 已完成
 
 **需求描述**:
 完善作品审核状态机和管理后台审核界面。
 
 **子任务**:
-13.1. 定义审核状态机（pending_review → approved → published / rejected）
-13.2. 实现作品审核 API（审批/拒绝）
-13.3. 实现审核意见记录功能
-13.4. 前端审核队列列表
-13.5. 审核操作组件（通过/拒绝按钮）
+13.1. ✅ 定义审核状态机（pending_review → published / rejected）
+13.2. ✅ 实现作品审核 API（审批/拒绝）
+13.3. ✅ 实现审核意见记录功能（拒绝原因）
+13.4. ✅ 前端审核队列列表
+13.5. ✅ 审核操作组件（通过/拒绝按钮）
 
 **技术栈**:
-- Backend: FastAPI, PostgreSQL
-- Frontend: Next.js, React
+- Backend: Next.js, Prisma, PostgreSQL
+- Frontend: Next.js, React, Tailwind CSS
 
 **相关文件**:
-- `apps/web/src/app/api/admin/works/[id]/review/route.ts` - 新建
-- `apps/web/src/app/admin/works/review-queue/page.tsx` - 新建
+- `apps/web/src/app/api/admin/works/[id]/review/route.ts` - 审核 API ✅
+- `apps/web/src/app/api/admin/works/review/route.ts` - 审核队列列表 API ✅
+- `apps/web/src/app/admin/works/review-queue/page.tsx` - 审核队列页面 ✅
 
 **状态机**:
 ```
-pending_review → approved → published
-             ↘ rejected (with notes)
+draft → pending_review → published
+                     ↘ rejected (with notes)
+                     
+rejected → pending_review (重新提交)
+```
+
+**已实现功能**:
+- 待审核作品列表（分页）
+- 作品详情查看
+- 批准作品（状态变更为 published）
+- 拒绝作品（需填写原因，状态变更为 rejected）
+- 拒绝原因记录（添加到作品描述）
+- 审计日志自动记录（WORK_APPROVED, WORK_REJECTED）
+
+**API 端点**:
+```
+GET  /api/admin/works/review          - 获取待审核作品列表
+POST /api/admin/works/[id]/review     - 审核作品（批准/拒绝）
+GET  /api/admin/works/[id]            - 获取作品详情
+PUT  /api/admin/works/[id]            - 更新作品（重新提交）
 ```
 
 ---
