@@ -415,3 +415,33 @@ enum MessageRole {
   assistant
   system
 }
+
+// 知识库文档表 - 用于 RAG 系统
+model KnowledgeDocument {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String   @db.Text
+  category  String?  @db.VarChar(100)
+  tags      String[]
+  metadata  Json?    @map("metadata")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category], map: "idx_knowledge_documents_category")
+  @@index([createdAt], map: "idx_knowledge_documents_created_at")
+  @@map("knowledge_documents")
+}
+
+// 知识库分类表
+model KnowledgeCategory {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @unique @db.VarChar(100)
+  description String?  @db.Text
+  parentId    String?  @db.Uuid
+  parent      KnowledgeCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    KnowledgeCategory[] @relation("CategoryHierarchy")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([parentId], map: "idx_knowledge_categories_parent_id")
+  @@map("knowledge_categories")
+}

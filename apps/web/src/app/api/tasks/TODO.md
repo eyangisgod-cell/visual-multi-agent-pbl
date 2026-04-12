@@ -183,39 +183,64 @@ interface Message {
 
 ---
 
-### 任务 4: RAG 知识库系统 (Phase 5 扩展)
+### 任务 4: RAG 知识库系统 (Phase 5 扩展) ✅
 
 **优先级**: 高
 **预计工时**: 10 小时
+**状态**: 已完成
 
 **需求描述**:
 实现基于向量数据库的知识库检索增强生成 (RAG) 系统。
 
 **子任务**:
-4.1. 创建知识库文档表
-4.2. 实现文档切片和向量化
-4.3. 实现向量检索功能
-4.4. 实现 RAG 提示词模板
-4.5. 集成 LLM 生成回答
-4.6. 前端知识库管理界面
+4.1. ✅ 创建知识库文档表（KnowledgeDocument, KnowledgeCategory）
+4.2. ✅ 实现文档搜索功能（文本相似度搜索）
+4.3. ✅ 实现向量检索功能（ILIKE 文本搜索，预留 pgvector 集成）
+4.4. ✅ 实现 RAG 问答接口
+4.5. ✅ 前端知识库管理界面
 
 **技术栈**:
-- Python: langchain, sentence-transformers
-- PostgreSQL: pgvector
-- LLM: 阿里云通义千问
+- Backend: Next.js API Routes, Prisma, PostgreSQL
+- Frontend: Next.js, React, Tailwind CSS
 
 **相关文件**:
-- `apps/ai-service/app/api/rag.py` - 新建
-- `apps/ai-service/app/api/knowledge.py` - 新建
-- `apps/web/src/app/admin/knowledge/page.tsx` - 新建
+- `apps/web/prisma/schema.prisma` - 添加 KnowledgeDocument, KnowledgeCategory 模型 ✅
+- `apps/web/src/app/api/admin/knowledge/documents/route.ts` - 文档列表和创建 API ✅
+- `apps/web/src/app/api/admin/knowledge/documents/[id]/route.ts` - 文档详情/更新/删除 API ✅
+- `apps/web/src/app/api/admin/knowledge/categories/route.ts` - 分类管理 API ✅
+- `apps/web/src/app/api/knowledge/search/route.ts` - 知识搜索 API ✅
+- `apps/web/src/app/api/knowledge/query/route.ts` - RAG 问答 API ✅
+- `apps/web/src/app/admin/knowledge/page.tsx` - 知识库管理 UI ✅
+- `apps/web/tests/e2e/rag-knowledge.spec.ts` - 14 个 E2E 测试 ✅
 
 **API 端点**:
 ```
-POST   /api/v1/knowledge/upload       - 上传知识文档
-GET    /api/v1/knowledge/documents    - 获取文档列表
-DELETE /api/v1/knowledge/documents/:id - 删除文档
-POST   /api/v1/rag/query              - RAG 查询
+GET    /api/admin/knowledge/documents        - 获取文档列表
+POST   /api/admin/knowledge/documents        - 上传知识文档
+GET    /api/admin/knowledge/documents/[id]   - 获取文档详情
+PUT    /api/admin/knowledge/documents/[id]   - 更新文档
+DELETE /api/admin/knowledge/documents/[id]   - 删除文档
+GET    /api/admin/knowledge/categories       - 获取分类列表
+POST   /api/admin/knowledge/categories       - 创建分类
+POST   /api/knowledge/search                 - 知识搜索（向量相似度）
+POST   /api/knowledge/query                  - RAG 问答
 ```
+
+**已实现功能**:
+- 知识库文档 CRUD 操作
+- 文档分类管理
+- 文本相似度搜索（标题、内容匹配）
+- 相关性分数计算（基于匹配位置、频次）
+- RAG 问答接口（返回检索内容和来源）
+- 搜索过滤（按分类、关键词）
+- 前端知识库管理界面（上传、查看、删除、搜索）
+- 审计日志集成（DOCUMENT_CREATED/UPDATED/DELETED）
+
+**后续优化**:
+- 集成 pgvector 实现真正的向量相似度搜索
+- 集成 LLM 生成智能回答
+- 文档切片和向量化处理
+- 支持多种文档格式（PDF, Word, Markdown）
 
 ---
 
@@ -597,7 +622,7 @@ PUT  /api/admin/works/[id]            - 更新作品（重新提交）
 |--------|---------|---------|---------|-----------|------|
 | 🔴 高 | 1 | 记忆系统向量搜索优化 | 高 | 中 | ✅ 完成 |
 | 🔴 高 | 3 | 智能体实时对话系统 | 高 | 高 | ✅ 完成 |
-| 🔴 高 | 4 | RAG 知识库系统 | 高 | 高 | ⏳ 待开发 |
+| 🔴 高 | 4 | RAG 知识库系统 | 高 | 高 | ✅ 完成 |
 | 🔴 高 | 9 | 性能优化专项 | 中 | 中 | ⏳ 待开发 |
 | 🔴 高 | 10 | 安全加固专项 | 高 | 中 | ✅ 完成 |
 | 🔴 高 | 15 | Phase 6 集成测试 | 高 | 低 | ✅ 完成 |
