@@ -4,6 +4,7 @@ import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { twMerge } from 'tailwind-merge'
 import { clsx } from 'clsx'
+import FileUploader from '@/components/Upload/FileUploader'
 
 function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs))
@@ -32,9 +33,11 @@ export default function WorkUploadPage() {
 
   const [coverImage, setCoverImage] = useState<File | null>(null)
   const [coverPreview, setCoverPreview] = useState<string | null>(null)
+  const [coverImageUrl, setCoverImageUrl] = useState<string>('')
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [uploadedFiles, setUploadedFiles] = useState<{ fileUrl: string; fileName: string; mimeType: string }[]>([])
 
   // Fetch projects
   const fetchProjects = useCallback(async () => {
@@ -115,15 +118,6 @@ export default function WorkUploadPage() {
     try {
       setLoading(true)
 
-      // TODO: Upload cover image and get URL
-      // For now, use placeholder or existing URL
-      let coverImageUrl = ''
-      if (coverImage) {
-        // In production, upload to cloud storage and get URL
-        // For testing, use a placeholder
-        coverImageUrl = 'https://via.placeholder.com/800x600'
-      }
-
       const res = await fetch('/api/works', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,6 +143,17 @@ export default function WorkUploadPage() {
       setLoading(false)
     }
   }
+
+  // Handle cover upload complete
+  const handleCoverUploadComplete = useCallback((result: { fileUrl: string; fileName: string; mimeType: string }) => {
+    setCoverImageUrl(result.fileUrl)
+    setUploadedFiles(prev => [...prev, result])
+  }, [])
+
+  // Handle cover upload error
+  const handleCoverUploadError = useCallback((error: string) => {
+    setErrors(prev => ({ ...prev, cover: error }))
+  }, [])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -222,20 +227,13 @@ export default function WorkUploadPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               封面图片
             </label>
-            <div className="flex items-center gap-4">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleCoverChange}
-                className="block w-full text-sm text-gray-500
-                  file:mr-4 file:py-2 file:px-4
-                  file:rounded-md file:border-0
-                  file:text-sm file:font-semibold
-                  file:bg-indigo-50 file:text-indigo-700
-                  hover:file:bg-indigo-100"
-              />
-            </div>
+            <FileUploader
+              multiple={false}
+              allowedTypes={['image/*']}
+              maxFileSize={10 * 1024 * 1024} // 10MB for cover image
+              onUploadComplete={handleCoverUploadComplete}
+              onUploadError={handleCoverUploadError}
+            />
 
             {/* Cover Preview */}
             {coverPreview && (
@@ -259,6 +257,11 @@ export default function WorkUploadPage() {
                   </svg>
                 </button>
               </div>
+            )}
+
+            {/* Cover upload error */}
+            {errors.cover && (
+              <p className="mt-2 text-sm text-red-500">{errors.cover}</p>
             )}
           </div>
 

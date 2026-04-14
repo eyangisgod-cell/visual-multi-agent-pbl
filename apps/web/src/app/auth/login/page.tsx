@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -12,10 +12,25 @@ export default function LoginPage() {
   const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [csrfToken, setCsrfToken] = useState('')
   const [formData, setFormData] = useState({
     username: '',
     password: ''
   })
+
+  // Fetch CSRF token on component mount
+  useEffect(() => {
+    const fetchCsrfToken = async () => {
+      try {
+        const response = await fetch('/api/csrf-token')
+        const data = await response.json()
+        setCsrfToken(data.token)
+      } catch (err) {
+        console.error('Failed to fetch CSRF token:', err)
+      }
+    }
+    fetchCsrfToken()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -25,7 +40,10 @@ export default function LoginPage() {
     try {
       const response = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-csrf-token': csrfToken
+        },
         body: JSON.stringify(formData)
       })
 
@@ -115,6 +133,26 @@ export default function LoginPage() {
               {isLoading ? '登录中...' : '登录'}
             </Button>
           </form>
+
+          {/* Divider */}
+          <div className="mt-6 relative">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">其他登录方式</span>
+            </div>
+          </div>
+
+          {/* WeChat login button */}
+          <div className="mt-6">
+            <Link
+              href="/auth/wechat"
+              className="block w-full py-3 px-4 text-center border border-green-200 rounded-lg text-green-600 hover:bg-green-50 transition-colors font-medium"
+            >
+              微信登录
+            </Link>
+          </div>
 
           {/* Footer links */}
           <div className="mt-6 text-center">

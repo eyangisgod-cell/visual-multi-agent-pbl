@@ -113,3 +113,41 @@ export async function DELETE(
     );
   }
 }
+
+// PATCH /api/admin/llm/[provider] - 更新 LLM 配置（部分更新）
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { provider: string } }
+) {
+  try {
+    const body = await request.json();
+    const { isActive } = body;
+
+    const existingConfig = await prisma.llmConfig.findUnique({
+      where: { provider: params.provider },
+    });
+
+    if (!existingConfig) {
+      return NextResponse.json(
+        { error: 'LLM config not found' },
+        { status: 404 }
+      );
+    }
+
+    const updatedConfig = await prisma.llmConfig.update({
+      where: { provider: params.provider },
+      data: { isActive },
+    });
+
+    return NextResponse.json({
+      ...updatedConfig,
+      apiKey: `${updatedConfig.apiKey.substring(0, 8)}...`,
+    });
+  } catch (error) {
+    console.error('Error updating LLM config:', error);
+    return NextResponse.json(
+      { error: 'Failed to update LLM config' },
+      { status: 500 }
+    );
+  }
+}

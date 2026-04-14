@@ -4,59 +4,122 @@ import { createAuditLog, extractIpAddress, extractUserAgent } from '@/lib/audit-
 
 const prisma = new PrismaClient();
 
-// POST /api/admin/works/[id]/review - 审核作品（批准或拒绝）
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const body = await request.json();
-    const { action, reason } = body;
+// UUID 格式验证
+function isValidUUID(uuid: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(uuid);
+}
 
-    // 验证 action 参数
-    if (!action || !['approve', 'reject'].includes(action)) {
+// GET /api/admin/works/[id]/review - 获取作品的评价列表
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const workId = params.id;
+
+    // 验证作品 ID 格式
+    if (!isValidUUID(workId)) {
+      return NextResponse.json({ error: 'Invalid work ID format' }, { status: 400 });
+    }
+
+    // 验证作品 ID 是否存在
+    const work = await prisma.work.findUnique({
+      where: { id: workId },
+    });
+
+    if (!work) {
+      return NextResponse.json({ error: 'Work not found' }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '10');
+    const skip = (page - 1) * limit;
+
+    const [reviews, total] = await Promise.all([
+      prisma.workReview.findMany({
+        where: { workId },
+        skip,
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              username: true,
+              nickname: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.workReview.count({
+        where: { workId },
+      }),
+    ]);
+
+    return NextResponse.json({
+      reviews,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching work reviews:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch work reviews' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/admin/works/[id]/review - 添加新的评价
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const workId = params.id;
+
+    // 验证作品 ID 格式
+    if (!isValidUUID(workId)) {
+      return NextResponse.json({ error: 'Invalid work ID format' }, { status: 400 });
+    }
+
+    // 验证作品 ID 是否存在
+    const work = await prisma.work.findUnique({
+      where: { id: workId },
+    });
+
+    if (!work) {
+      return NextResponse.json({ error: 'Work not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { userId, rating, comment } = body;
+
+    if (!userId || !comment) {
       return NextResponse.json(
-        { error: 'Invalid action. Must be "approve" or "reject"' },
+        { error: 'userId and comment are required' },
         { status: 400 }
       );
     }
 
-    // 查找作品
-    const existingWork = await prisma.work.findUnique({
-      where: { id: params.id },
-    });
-
-    if (!existingWork) {
-      return NextResponse.json(
-        { error: 'Work not found' },
-        { status: 404 }
-      );
-    }
-
-    // 根据 action 更新作品状态
-    let newStatus: string;
-    let updateData: any = {};
-
-    if (action === 'approve') {
-      newStatus = 'published';
-    } else {
-      // action === 'reject'
-      if (!reason || reason.trim() === '') {
+    // 验证评分范围（如果提供）
+    if (rating !== undefined && rating !== null) {
+      const ratingNum = parseInt(rating);
+      if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
         return NextResponse.json(
-          { error: 'Reject reason is required' },
+          { error: 'Rating must be between 1 and 5' },
           { status: 400 }
         );
       }
-      newStatus = 'rejected';
-      // 将拒绝原因添加到作品描述中
-      updateData.description = `${existingWork.description || ''}\n\n[审核拒绝原因]: ${reason}`;
     }
 
-    updateData.status = newStatus;
-
-    const updatedWork = await prisma.work.update({
-      where: { id: params.id },
-      data: updateData,
+    const review = await prisma.workReview.create({
+      data: {
+        workId,
+        userId,
+        rating: rating !== undefined && rating !== null ? parseInt(rating) : null,
+        comment,
+      },
       include: {
         user: {
           select: {
@@ -65,10 +128,100 @@ export async function POST(
             nickname: true,
           },
         },
-        project: {
+      },
+    });
+
+    // 创建审计日志
+    await createAuditLog({
+      action: 'WORK_REVIEW_CREATED',
+      entityType: 'WorkReview',
+      entityId: review.id,
+      metadata: {
+        workId,
+        userId,
+        rating: review.rating,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    });
+
+    return NextResponse.json({ review }, { status: 201 });
+  } catch (error) {
+    console.error('Error creating work review:', error);
+    return NextResponse.json(
+      { error: 'Failed to create work review' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/admin/works/[id]/review/[reviewId] - 更新评价
+export async function PUT(request: NextRequest, { params }: { params: { id: string; reviewId: string } }) {
+  try {
+    const workId = params.id;
+    const reviewId = params.reviewId;
+
+    // 验证作品 ID 格式
+    if (!isValidUUID(workId)) {
+      return NextResponse.json({ error: 'Invalid work ID format' }, { status: 400 });
+    }
+
+    // 验证评价 ID 格式
+    if (!isValidUUID(reviewId)) {
+      return NextResponse.json({ error: 'Invalid review ID format' }, { status: 400 });
+    }
+
+    // 验证作品 ID 是否存在
+    const work = await prisma.work.findUnique({
+      where: { id: workId },
+    });
+
+    if (!work) {
+      return NextResponse.json({ error: 'Work not found' }, { status: 404 });
+    }
+
+    // 验证评价 ID 是否存在
+    const existingReview = await prisma.workReview.findUnique({
+      where: { id: reviewId },
+    });
+
+    if (!existingReview) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+
+    const body = await request.json();
+    const { rating, comment } = body;
+
+    if (!comment) {
+      return NextResponse.json(
+        { error: 'Comment is required' },
+        { status: 400 }
+      );
+    }
+
+    // 验证评分范围（如果提供）
+    if (rating !== undefined && rating !== null) {
+      const ratingNum = parseInt(rating);
+      if (isNaN(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+        return NextResponse.json(
+          { error: 'Rating must be between 1 and 5' },
+          { status: 400 }
+        );
+      }
+    }
+
+    const review = await prisma.workReview.update({
+      data: {
+        rating: rating !== undefined && rating !== null ? parseInt(rating) : existingReview.rating,
+        comment,
+      },
+      where: { id: reviewId },
+      include: {
+        user: {
           select: {
             id: true,
-            title: true,
+            username: true,
+            nickname: true,
           },
         },
       },
@@ -76,29 +229,84 @@ export async function POST(
 
     // 创建审计日志
     await createAuditLog({
-      action: action === 'approve' ? 'WORK_APPROVED' : 'WORK_REJECTED',
-      entityType: 'Work',
-      entityId: params.id,
-      userId: existingWork.userId,
-      username: existingWork.user?.username || null,
+      action: 'WORK_REVIEW_UPDATED',
+      entityType: 'WorkReview',
+      entityId: review.id,
       metadata: {
-        workTitle: updatedWork.title,
-        previousStatus: existingWork.status,
-        newStatus,
-        reason: reason || null,
+        workId,
+        reviewId,
+        rating: review.rating,
       },
       ipAddress: extractIpAddress(request.headers),
       userAgent: extractUserAgent(request.headers),
     });
 
-    return NextResponse.json({
-      work: updatedWork,
-      message: `Work ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
-    });
+    return NextResponse.json({ review }, { status: 200 });
   } catch (error) {
-    console.error('Error reviewing work:', error);
+    console.error('Error updating work review:', error);
     return NextResponse.json(
-      { error: 'Failed to review work' },
+      { error: 'Failed to update work review' },
+      { status: 500 }
+    );
+  }
+}
+
+// DELETE /api/admin/works/[id]/review/[reviewId] - 删除评价
+export async function DELETE(request: NextRequest, { params }: { params: { id: string; reviewId: string } }) {
+  try {
+    const workId = params.id;
+    const reviewId = params.reviewId;
+
+    // 验证作品 ID 格式
+    if (!isValidUUID(workId)) {
+      return NextResponse.json({ error: 'Invalid work ID format' }, { status: 400 });
+    }
+
+    // 验证评价 ID 格式
+    if (!isValidUUID(reviewId)) {
+      return NextResponse.json({ error: 'Invalid review ID format' }, { status: 400 });
+    }
+
+    // 验证作品 ID 是否存在
+    const work = await prisma.work.findUnique({
+      where: { id: workId },
+    });
+
+    if (!work) {
+      return NextResponse.json({ error: 'Work not found' }, { status: 404 });
+    }
+
+    // 验证评价 ID 是否存在
+    const existingReview = await prisma.workReview.findUnique({
+      where: { id: reviewId },
+    });
+
+    if (!existingReview) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+
+    await prisma.workReview.delete({
+      where: { id: reviewId },
+    });
+
+    // 创建审计日志
+    await createAuditLog({
+      action: 'WORK_REVIEW_DELETED',
+      entityType: 'WorkReview',
+      entityId: reviewId,
+      metadata: {
+        workId,
+        reviewId,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    });
+
+    return NextResponse.json({ message: 'Review deleted successfully' }, { status: 200 });
+  } catch (error) {
+    console.error('Error deleting work review:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete work review' },
       { status: 500 }
     );
   }

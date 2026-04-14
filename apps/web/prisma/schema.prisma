@@ -29,6 +29,8 @@ model User {
   assignedTasks   ProjectTask[] @relation("AssignedTasks")
   likes           WorkLike[]
   WorkReview      WorkReview[]
+  notifications   Notification[]
+  wechatBindings  WechatBinding[]
 
   @@index([invitation_code], map: "idx_users_invitation_code")
   @@index([username], map: "idx_users_username")
@@ -444,4 +446,179 @@ model KnowledgeCategory {
 
   @@index([parentId], map: "idx_knowledge_categories_parent_id")
   @@map("knowledge_categories")
+}
+
+// 场景模板表 - 用于游戏场景配置
+model Scene {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?  @db.Text
+  elements    Json?    // 场景元素配置
+  resources   Json?    // 关联资源
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive], map: "idx_scenes_is_active")
+  @@map("scenes")
+}
+
+// 系统设置表 - 用于存储各种系统配置
+model SystemSetting {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  value     Json?
+  category  String?  @db.VarChar(50)
+  updatedAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([category], map: "idx_system_settings_category")
+  @@map("system_settings")
+}
+
+// 通知表 - 用于系统通知
+model Notification {
+  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String           @map("user_id") @db.Uuid
+  type        NotificationType @default(info) @map("type")
+  title       String           @db.VarChar(255)
+  content     String           @db.Text
+  isRead      Boolean          @default(false) @map("is_read")
+  actionUrl   String?          @map("action_url") @db.VarChar(500)
+  metadata    Json?            @map("metadata")
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  readAt      DateTime?        @map("read_at") @db.Timestamptz(6)
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_notifications_user_id")
+  @@index([isRead], map: "idx_notifications_is_read")
+  @@index([createdAt], map: "idx_notifications_created_at")
+  @@map("notifications")
+}
+
+enum NotificationType {
+  info
+  success
+  warning
+  error
+  task
+  system
+  achievement
+}
+
+// 积分记录表 - 记录用户积分变动
+model PointsLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  points      Int      // 积分变化量（正数增加，负数减少）
+  balance     Int      // 变动后的积分余额
+  action      String   @db.VarChar(50) // 积分动作类型：login, daily_bonus, submit_work, work_approved, work_rejected, manual_adjustment
+  description String   @db.Text
+  metadata    Json?    @map("metadata") // 额外元数据
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_points_logs_user_id")
+  @@index([action], map: "idx_points_logs_action")
+  @@index([createdAt], map: "idx_points_logs_created_at")
+  @@map("points_logs")
+}
+
+// 积分规则配置表
+model PointsRule {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action      String   @unique @db.VarChar(50) // 积分动作类型
+  points      Int      // 积分数值
+  description String?  @db.Text
+  isActive    Boolean  @default(true) @map("is_active")
+  metadata    Json?    @map("metadata")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([action], map: "idx_points_rules_action")
+  @@map("points_rules")
+}
+
+// 用户等级配置表
+model UserLevel {
+  level       Int    @id
+  name        String @db.VarChar(50) // 等级名称
+  minPoints   Int    @map("min_points") // 最低积分要求
+  maxPoints   Int?   @map("max_points") // 最高积分要求（可选，最高等级可为空）
+  privileges  Json?  @map("privileges") // 等级特权
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user_levels")
+}
+
+// 微信 OAuth 配置表
+model WechatConfig {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  appId       String   @db.VarChar(100) // 微信公众号/开放平台 AppID
+  appSecret   String   @db.VarChar(500) // 微信公众号/开放平台 AppSecret
+  token       String?  @db.VarChar(500) // 微信公众号 Token
+  encodingAesKey String? @db.VarChar(500) // 微信公众号 EncodingAESKey
+  isActive    Boolean  @default(false) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive], map: "idx_wechat_configs_is_active")
+  @@map("wechat_configs")
+}
+
+// 微信用户绑定表
+model WechatBinding {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  wechatOpenid String  @unique @map("wechat_openid") @db.VarChar(100) // 微信 OpenID
+  wechatUnionid String? @db.VarChar(100) // 微信 UnionID（跨应用唯一）
+  nickname    String?  @db.VarChar(100) // 微信昵称
+  avatarUrl   String?  @map("avatar_url") @db.VarChar(500) // 微信头像
+  gender      Int?     // 性别：0-未知，1-男，2-女
+  language    String?  @db.VarChar(20) // 语言
+  city        String?  @db.VarChar(50) // 城市
+  province    String?  @db.VarChar(50) // 省份
+  country     String?  @db.VarChar(50) // 国家
+  accessToken String?  @db.VarChar(1000) // 微信访问令牌（用于刷新用户信息）
+  refreshToken String? @db.VarChar(1000) // 刷新令牌
+  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz(6) // 令牌过期时间
+  boundAt     DateTime @default(now()) @map("bound_at") @db.Timestamptz(6)
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_wechat_bindings_user_id")
+  @@index([wechatOpenid], map: "idx_wechat_bindings_wechat_openid")
+  @@index([wechatUnionid], map: "idx_wechat_bindings_wechat_unionid")
+  @@map("wechat_bindings")
+}
+
+// 微信登录会话表 - 用于扫码登录临时会话
+model WechatLoginSession {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionKey  String   @unique @map("session_key") @db.VarChar(100) // 临时会话 key
+  wechatOpenid String? @db.VarChar(100) // 扫码后的微信 OpenID
+  status      String   @default("pending") @db.VarChar(20) // pending, scanned, confirmed, expired, used
+  expiresAt   DateTime @db.Timestamptz(6) // 会话过期时间
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([sessionKey], map: "idx_wechat_login_sessions_session_key")
+  @@index([status], map: "idx_wechat_login_sessions_status")
+  @@map("wechat_login_sessions")
+}
+
+// 文件上传分片表 - 用于大文件分片上传和断点续传
+model UploadChunk {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileHash    String   @map("file_hash") @db.VarChar(64) // 文件 SHA256 哈希
+  chunkIndex  Int      @map("chunk_index") // 分片索引（从 0 开始）
+  totalChunks Int      @map("total_chunks") // 总分片数
+  fileName    String   @map("file_name") @db.VarChar(255) // 原始文件名
+  mimeType    String?  @map("mime_type") @db.VarChar(255) // 文件 MIME 类型
+  fileSize    Int?     @map("file_size") // 分片大小（字节）
+  uploadedAt  DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+
+  @@index([fileHash], map: "idx_upload_chunks_file_hash")
+  @@index([fileHash, chunkIndex], map: "idx_upload_chunks_file_hash_chunk_index")
+  @@map("upload_chunks")
 }

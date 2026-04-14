@@ -100,4 +100,31 @@ describe('Agent Selection Panel', () => {
       expect(fs.existsSync(routePath)).toBe(true)
     })
   })
+
+  describe('Agent selection page API integration', () => {
+    it('should fetch agents from API instead of using mock data', () => {
+      const pagePath = path.join(appDir, 'admin', 'agents', 'select', 'page.tsx')
+      const content = fs.readFileSync(pagePath, 'utf-8')
+      // Should use fetch or useEffect to get agents from API
+      expect(content).toMatch(/useEffect|fetch|\/api\/admin\/agents\/list/)
+    })
+
+    it('should have loading state', () => {
+      const pagePath = path.join(appDir, 'admin', 'agents', 'select', 'page.tsx')
+      const content = fs.readFileSync(pagePath, 'utf-8')
+      expect(content).toMatch(/loading|isLoading|加载中/)
+    })
+
+    it('should have error handling', () => {
+      const pagePath = path.join(appDir, 'admin', 'agents', 'select', 'page.tsx')
+      const content = fs.readFileSync(pagePath, 'utf-8')
+      expect(content).toMatch(/error|Error|错误/)
+    })
+
+    it('should call select API when agent is selected', () => {
+      const pagePath = path.join(appDir, 'admin', 'agents', 'select', 'page.tsx')
+      const content = fs.readFileSync(pagePath, 'utf-8')
+      expect(content).toMatch(/POST|\/api\/admin\/agents\/select/)
+    })
+  })
 })
