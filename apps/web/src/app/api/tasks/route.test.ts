@@ -120,6 +120,11 @@ describe('GET /api/tasks', () => {
 describe('POST /api/tasks', () => {
   beforeEach(() => {
     jest.clearAllMocks()
+    jest.spyOn(global, 'fetch').mockResolvedValue(new Response(null, { status: 200 }))
+  })
+
+  afterEach(() => {
+    jest.restoreAllMocks()
   })
 
   const createMockRequest = (body: Record<string, unknown>) => {
@@ -252,5 +257,74 @@ describe('POST /api/tasks', () => {
     expect(response.status).toBe(201)
     expect(data.task).toBeDefined()
     expect(data.task.agentType).toBe('coach')
+  })
+
+  it('should launch AI agent when agentType is specified', async () => {
+    const mockTask = {
+      id: 'task-123',
+      projectId: 'project-123',
+      title: 'Agent Task',
+      description: 'Task with agent',
+      orderIndex: 0,
+      agentType: 'guide',
+      assignedTo: null,
+      dueDate: null,
+      status: 'todo',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      project: { id: 'project-123', title: 'Test Project' },
+      assignedUser: null
+    }
+
+    mockPrisma.project.findUnique.mockResolvedValue({ id: 'project-123' })
+    mockPrisma.projectTask.create.mockResolvedValue(mockTask)
+
+    const request = createMockRequest({
+      projectId: 'project-123',
+      title: 'Agent Task',
+      description: 'Task with agent',
+      orderIndex: 0,
+      agentType: 'guide'
+    })
+    const response = await POST(request)
+
+    expect(response.status).toBe(201)
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.stringContaining('/api/v1/agents/launch'),
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentType: 'guide',
+          taskId: 'task-123',
+          taskTitle: 'Agent Task',
+          taskDescription: 'Task with agent'
+        })
+      }
+    )
+  })
+
+  it('should not launch AI agent when agentType is not specified', async () => {
+    mockPrisma.project.findUnique.mockResolvedValue({ id: 'project-123' })
+    mockPrisma.projectTask.create.mockResolvedValue({
+      id: 'task-123',
+      projectId: 'project-123',
+      title: 'Simple Task',
+      orderIndex: 0,
+      agentType: null,
+      status: 'todo',
+      project: { id: 'project-123', title: 'Test Project' },
+      assignedUser: null
+    })
+
+    const request = createMockRequest({
+      projectId: 'project-123',
+      title: 'Simple Task',
+      orderIndex: 0
+    })
+    const response = await POST(request)
+
+    expect(response.status).toBe(201)
+    expect(global.fetch).not.toHaveBeenCalled()
   })
 })
