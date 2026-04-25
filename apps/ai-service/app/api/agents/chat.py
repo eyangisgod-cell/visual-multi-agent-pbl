@@ -5,7 +5,7 @@ WebSocket API for real-time agent chat and collaboration.
 import json
 import asyncio
 from typing import Any, Dict, List, Optional
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, HTTPException, BackgroundTasks
 from fastapi.responses import StreamingResponse
 
 from app.orchestrator import AgentOrchestrator, get_orchestrator
@@ -17,6 +17,15 @@ router = APIRouter(prefix="/agents", tags=["agents"])
 active_connections: Dict[str, WebSocket] = {}
 # Store session states
 session_states: Dict[str, Dict[str, Any]] = {}
+
+# Map frontend agent types to backend agent names
+AGENT_TYPE_MAP: Dict[str, str] = {
+    "guide": "Mentor",
+    "tutor": "Assistant",
+    "evaluator": "Analyst",
+    "collaborator": "Marketer",
+    "creator": "Designer",
+}
 
 
 @router.websocket("/ws/chat/{session_id}")
@@ -390,3 +399,83 @@ async def list_agents():
             for name, agent in agents.items()
         ]
     }
+
+
+@router.post("/launch")
+async def launch_agent(
+    background_tasks: BackgroundTasks,
+    payload: Dict[str, Any],
+):
+    """
+    Launch an AI agent for a task.
+
+    Request body:
+    {
+        "agentType": "guide" | "tutor" | "evaluator" | "collaborator" | "creator",
+        "taskId": "task-uuid",
+        "taskTitle": "Task title",
+        "taskDescription": "Optional task description"
+    }
+    """
+    agent_type = payload.get("agentType")
+    task_id = payload.get("taskId")
+    task_title = payload.get("taskTitle", "")
+    task_description = payload.get("taskDescription", "")
+
+    if not agent_type or not task_id:
+        raise HTTPException(
+            status_code=400,
+            detail="agentType and taskId are required"
+        )
+
+    backend_agent_name = AGENT_TYPE_MAP.get(agent_type)
+    if not backend_agent_name:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown agent type: {agent_type}. Valid types: {list(AGENT_TYPE_MAP.keys())}"
+        )
+
+    orchestrator = get_orchestrator()
+
+    # Start agent execution in background to avoid blocking the response
+    background_tasks.add_task(
+        _run_agent_task,
+        orchestrator,
+        backend_agent_name,
+        task_id,
+        task_title,
+        task_description,
+    )
+
+    return {
+        "status": "launched",
+        "agentType": backend_agent_name,
+        "taskId": task_id,
+    }
+
+
+async def _run_agent_task(
+    orchestrator: AgentOrchestrator,
+    agent_name: str,
+    task_id: str,
+    task_title: str,
+    task_description: str,
+) -> None:
+    """Run agent delegation in background."""
+    try:
+        task_prompt = f"Task: {task_title}"
+        if task_description:
+            task_prompt += f"\nDescription: {task_description}"
+
+        result = orchestrator.run_delegation(
+            task=task_prompt,
+            target_agent=agent_name,
+            context={"taskId": task_id},
+        )
+
+        if result.get("success"):
+            print(f"Agent {agent_name} completed task {task_id}")
+        else:
+            print(f"Agent {agent_name} failed task {task_id}: {result.get('error')}")
+    except Exception as e:
+        print(f"Error running agent task {task_id}: {e}")
