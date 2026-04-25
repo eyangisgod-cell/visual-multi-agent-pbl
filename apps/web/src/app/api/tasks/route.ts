@@ -134,6 +134,23 @@ export async function POST(request: NextRequest) {
       }
     })
 
+    // Launch AI agent if agentType is specified
+    if (data.agentType) {
+      const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:8000'
+      fetch(`${aiServiceUrl}/api/v1/agents/launch`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          agentType: data.agentType,
+          taskId: task.id,
+          taskTitle: task.title,
+          taskDescription: task.description
+        })
+      }).catch(err => {
+        console.error('Failed to launch agent:', err)
+      })
+    }
+
     return NextResponse.json({ task }, { status: 201 })
   } catch (error) {
     console.error('Error creating task:', error)
