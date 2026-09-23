@@ -149,11 +149,15 @@ async def add_memory(memory: MemoryCreate):
         # Serialize metadata to JSON string for asyncpg
         metadata_json = json.dumps(memory.metadata) if memory.metadata else None
 
+        # Convert embedding list to JSON array string for pgvector
+        # asyncpg expects vector values as JSON array: "[0.1,0.2,...]"
+        embedding_str = '[' + ','.join(map(str, embedding)) + ']' if embedding else None
+
         row = await conn.fetchrow(
             """
             INSERT INTO agent_memories
                 (agent_id, type, content, importance, tags, embedding, metadata, expires_at, consolidated)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6::vector, $7, $8, $9)
             RETURNING id, agent_id, type, content, importance, tags, metadata
             """,
             memory.agent_id,
@@ -161,7 +165,7 @@ async def add_memory(memory: MemoryCreate):
             memory.content,
             memory.importance,
             memory.tags,
-            embedding,
+            embedding_str,
             metadata_json,
             expires_at,
             False,
@@ -216,22 +220,25 @@ async def search_memories(search: MemorySearch):
     try:
         # Generate embedding for the search query
         query_embedding = generate_embedding(search.query)
+        # Convert to JSON array string for pgvector
+        query_embedding_str = '[' + ','.join(map(str, query_embedding)) + ']'
     except Exception as e:
         # Fallback to ILIKE search if embedding generation fails
         return await _search_memories_fallback(search)
 
     # Build query with vector similarity search
     # Using cosine distance (<->) which returns 0 for identical vectors, 2 for opposite
-    # Convert to similarity: 1 - cosine_distance gives cosine similarity (0 to 1)
+    # Convert to similarity: 1 - cosine_distance gives cosine similarity (theoretically 0 to 1)
+    # Clamp to [0, 1] range to handle floating point precision issues
     # Only search memories that have embeddings (IS NOT NULL)
     query = """
         SELECT id, agent_id, type, content, importance, tags, metadata,
-               1 - (embedding <-> $2::vector) AS similarity
+               GREATEST(0, LEAST(1, 1 - (embedding <-> $2::vector))) AS similarity
         FROM agent_memories
         WHERE agent_id = $1
           AND embedding IS NOT NULL
     """
-    params = [search.agent_id, query_embedding]
+    params = [search.agent_id, query_embedding_str]
 
     if search.memory_type:
         query += " AND type = $3"

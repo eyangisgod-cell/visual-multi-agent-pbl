@@ -82,6 +82,10 @@ export async function POST(request: NextRequest) {
       difficulty,
       rubricCriteria,
       tags,
+      tasks,
+      coverImageUrl,
+      estimatedTime,
+      assignedStudents,
     } = body;
 
     // 验证必填字段
@@ -92,18 +96,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const project = await prisma.project.create({
-      data: {
-        title,
-        description,
-        gradeMin,
-        gradeMax,
-        subject,
-        difficulty: difficulty || 1,
-        rubricCriteria,
-        tags: tags || [],
-        status: 'draft',
-      },
+    // 使用事务创建项目和任务
+    const project = await prisma.$transaction(async (tx) => {
+      const newProject = await tx.project.create({
+        data: {
+          title,
+          description,
+          gradeMin,
+          gradeMax,
+          subject,
+          difficulty: difficulty || 1,
+          rubricCriteria,
+          tags: tags || [],
+          status: 'draft',
+          cover_image_url: coverImageUrl,
+          estimated_minutes: estimatedTime ? parseInt(estimatedTime) : null,
+        },
+      });
+
+      // 如果有任务，一并创建
+      if (tasks && Array.isArray(tasks) && tasks.length > 0) {
+        await tx.projectTask.createMany({
+          data: tasks.map((task: any, index: number) => ({
+            projectId: newProject.id,
+            title: task.title,
+            description: task.description || null,
+            order_index: index,
+            agent_type: task.agentType || 'guide',
+            expected_output: task.expectedOutput || null,
+            status: 'todo',
+          })),
+        });
+      }
+
+      return newProject;
     });
 
     // 创建审计日志

@@ -1,6 +1,10 @@
 import { Application, Container, Sprite, Graphics, Texture, TilingSprite } from 'pixi.js'
 import { Assets } from 'pixi.js'
 import { MentorAgent } from '../agents/MentorAgent'
+import { DesignerAgent } from '../agents/DesignerAgent'
+import { AnalystAgent } from '../agents/AnalystAgent'
+import { MarketerAgent } from '../agents/MarketerAgent'
+import { AssistantAgent } from '../agents/AssistantAgent'
 import { SpeechBubble } from '../agents/SpeechBubble'
 
 export interface CampusSceneConfig {
@@ -330,6 +334,15 @@ export class CampusScene {
     }
     this.agentMarkers.clear()
 
+    // Agent class mapping
+    const agentClassMap = {
+      mentor: MentorAgent,
+      designer: DesignerAgent,
+      analyst: AnalystAgent,
+      marketer: MarketerAgent,
+      assistant: AssistantAgent,
+    }
+
     // Create 5 platform agents at fixed positions
     const agentConfigs = [
       { id: 'mentor', name: '智慧导师', role: 'Mentor', x: 10, y: 8, primaryColor: 0x3498DB, secondaryColor: 0x2980B9, accessoryColor: 0x1ABC9C },
@@ -340,11 +353,20 @@ export class CampusScene {
     ]
 
     agentConfigs.forEach(config => {
-      const agent = new MentorAgent(config.x * this.TILE_SIZE, config.y * this.TILE_SIZE)
+      const AgentClass = agentClassMap[config.id as keyof typeof agentClassMap] || MentorAgent
+      const agent = new AgentClass(config.x * this.TILE_SIZE, config.y * this.TILE_SIZE)
 
-      // Set up click handler to show speech bubble
+      // Set up click handler to show speech bubble and dispatch event
       const handleClick = () => {
         this.showSpeechBubble(agent, `你好！我是${config.name}，很高兴为你服务。`)
+
+        // Dispatch custom event for React to handle
+        if (typeof window !== 'undefined') {
+          const event = new CustomEvent('agent-click', {
+            detail: { agentId: config.id, agentName: config.name },
+          })
+          window.dispatchEvent(event)
+        }
       }
       agent.onClick = handleClick
 

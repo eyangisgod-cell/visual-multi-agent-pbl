@@ -1,0 +1,369 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - heading "管理后台" [level=1] [ref=e6]
+          - button "◀" [ref=e7] [cursor=pointer]
+        - navigation [ref=e8]:
+          - link "📊 仪表盘" [ref=e9] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e10]: 📊
+            - generic [ref=e11]: 仪表盘
+          - link "📁 项目管理" [ref=e12] [cursor=pointer]:
+            - /url: /admin/projects
+            - generic [ref=e13]: 📁
+            - generic [ref=e14]: 项目管理
+          - link "🤖 智能体管理" [ref=e15] [cursor=pointer]:
+            - /url: /admin/agents
+            - generic [ref=e16]: 🤖
+            - generic [ref=e17]: 智能体管理
+          - link "🧠 LLM 配置" [ref=e18] [cursor=pointer]:
+            - /url: /admin/llm
+            - generic [ref=e19]: 🧠
+            - generic [ref=e20]: LLM 配置
+          - link "👥 用户管理" [ref=e21] [cursor=pointer]:
+            - /url: /admin/users
+            - generic [ref=e22]: 👥
+            - generic [ref=e23]: 用户管理
+          - link "🎬 场景模板" [ref=e24] [cursor=pointer]:
+            - /url: /admin/scenes
+            - generic [ref=e25]: 🎬
+            - generic [ref=e26]: 场景模板
+          - link "⚙️ 系统设置" [ref=e27] [cursor=pointer]:
+            - /url: /admin/settings
+            - generic [ref=e28]: ⚙️
+            - generic [ref=e29]: 系统设置
+        - link "🏠 返回首页" [ref=e31] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e32]: 🏠
+          - generic [ref=e33]: 返回首页
+    - main [ref=e34]:
+      - generic [ref=e36]:
+        - complementary [ref=e37]:
+          - generic [ref=e38]:
+            - generic [ref=e39]:
+              - heading "管理后台" [level=1] [ref=e40]
+              - button "◀" [ref=e41] [cursor=pointer]
+            - navigation [ref=e42]:
+              - link "📊 仪表盘" [ref=e43] [cursor=pointer]:
+                - /url: /admin
+                - generic [ref=e44]: 📊
+                - generic [ref=e45]: 仪表盘
+              - link "📁 项目管理" [ref=e46] [cursor=pointer]:
+                - /url: /admin/projects
+                - generic [ref=e47]: 📁
+                - generic [ref=e48]: 项目管理
+              - link "🤖 智能体管理" [ref=e49] [cursor=pointer]:
+                - /url: /admin/agents
+                - generic [ref=e50]: 🤖
+                - generic [ref=e51]: 智能体管理
+              - link "🧠 LLM 配置" [ref=e52] [cursor=pointer]:
+                - /url: /admin/llm
+                - generic [ref=e53]: 🧠
+                - generic [ref=e54]: LLM 配置
+              - link "👥 用户管理" [ref=e55] [cursor=pointer]:
+                - /url: /admin/users
+                - generic [ref=e56]: 👥
+                - generic [ref=e57]: 用户管理
+              - link "🎬 场景模板" [ref=e58] [cursor=pointer]:
+                - /url: /admin/scenes
+                - generic [ref=e59]: 🎬
+                - generic [ref=e60]: 场景模板
+              - link "⚙️ 系统设置" [ref=e61] [cursor=pointer]:
+                - /url: /admin/settings
+                - generic [ref=e62]: ⚙️
+                - generic [ref=e63]: 系统设置
+            - link "🏠 返回首页" [ref=e65] [cursor=pointer]:
+              - /url: /
+              - generic [ref=e66]: 🏠
+              - generic [ref=e67]: 返回首页
+        - main [ref=e68]:
+          - generic [ref=e70]:
+            - generic [ref=e71]:
+              - link "← 返回智能体管理" [ref=e73] [cursor=pointer]:
+                - /url: /admin/agents
+              - heading "创建智能体" [level=1] [ref=e74]
+              - paragraph [ref=e75]: 配置新的 AI 助手
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - heading "基本信息" [level=2] [ref=e78]
+                - generic [ref=e79]:
+                  - generic [ref=e80]:
+                    - generic [ref=e81]: 智能体名称
+                    - textbox "智能体名称" [ref=e82]:
+                      - /placeholder: 请输入智能体名称
+                  - generic [ref=e83]:
+                    - generic [ref=e84]: 智能体类型
+                    - combobox "智能体类型" [ref=e85]:
+                      - option "请选择类型" [selected]
+                      - option "导师"
+                      - option "助手"
+                      - option "伙伴"
+                      - option "评估者"
+                      - option "自定义"
+                  - generic [ref=e86]:
+                    - generic [ref=e87]: 智能体描述
+                    - textbox "智能体描述" [ref=e88]:
+                      - /placeholder: 描述智能体的用途和特点
+              - generic [ref=e89]:
+                - heading "人格特征" [level=2] [ref=e90]
+                - generic [ref=e91]:
+                  - generic [ref=e92]:
+                    - generic [ref=e93]: 性格特征
+                    - generic [ref=e94]:
+                      - generic [ref=e95] [cursor=pointer]:
+                        - checkbox "友好" [ref=e96]
+                        - generic [ref=e97]: 友好
+                      - generic [ref=e98] [cursor=pointer]:
+                        - checkbox "专业" [ref=e99]
+                        - generic [ref=e100]: 专业
+                      - generic [ref=e101] [cursor=pointer]:
+                        - checkbox "幽默" [ref=e102]
+                        - generic [ref=e103]: 幽默
+                      - generic [ref=e104] [cursor=pointer]:
+                        - checkbox "严肃" [ref=e105]
+                        - generic [ref=e106]: 严肃
+                      - generic [ref=e107] [cursor=pointer]:
+                        - checkbox "热情" [ref=e108]
+                        - generic [ref=e109]: 热情
+                      - generic [ref=e110] [cursor=pointer]:
+                        - checkbox "冷静" [ref=e111]
+                        - generic [ref=e112]: 冷静
+                      - generic [ref=e113] [cursor=pointer]:
+                        - checkbox "富有创造力" [ref=e114]
+                        - generic [ref=e115]: 富有创造力
+                      - generic [ref=e116] [cursor=pointer]:
+                        - checkbox "逻辑性强" [ref=e117]
+                        - generic [ref=e118]: 逻辑性强
+                  - generic [ref=e119]:
+                    - generic [ref=e120]:
+                      - generic [ref=e121]: 语气
+                      - combobox "语气" [ref=e122]:
+                        - option "温暖" [selected]
+                        - option "中性"
+                        - option "正式"
+                        - option "随意"
+                        - option "鼓励性"
+                        - option "指导性"
+                    - generic [ref=e123]:
+                      - generic [ref=e124]: 正式程度
+                      - slider "正式程度" [ref=e125]: "50"
+                      - text: "50"
+                  - generic [ref=e126]:
+                    - generic [ref=e127]:
+                      - generic [ref=e128]: 同理心
+                      - slider "同理心" [ref=e129]: "50"
+                      - text: "50"
+                    - generic [ref=e130]:
+                      - generic [ref=e131]: 耐心
+                      - slider "耐心" [ref=e132]: "50"
+                      - text: "50"
+                  - generic [ref=e133]:
+                    - generic [ref=e134]: 问候语
+                    - textbox "问候语" [ref=e135]:
+                      - /placeholder: 你好！我是你的 AI 助手
+                  - button "预览" [ref=e136] [cursor=pointer]
+              - generic [ref=e137]:
+                - heading "技能配置" [level=2] [ref=e138]
+                - generic [ref=e139]:
+                  - generic [ref=e140]:
+                    - generic [ref=e141]: 技能
+                    - group "技能" [ref=e142]:
+                      - generic [ref=e143] [cursor=pointer]:
+                        - checkbox "数学" [ref=e144]
+                        - generic [ref=e145]: 数学
+                      - generic [ref=e146] [cursor=pointer]:
+                        - checkbox "科学" [ref=e147]
+                        - generic [ref=e148]: 科学
+                      - generic [ref=e149] [cursor=pointer]:
+                        - checkbox "语言" [ref=e150]
+                        - generic [ref=e151]: 语言
+                      - generic [ref=e152] [cursor=pointer]:
+                        - checkbox "编程" [ref=e153]
+                        - generic [ref=e154]: 编程
+                      - generic [ref=e155] [cursor=pointer]:
+                        - checkbox "艺术" [ref=e156]
+                        - generic [ref=e157]: 艺术
+                      - generic [ref=e158] [cursor=pointer]:
+                        - checkbox "音乐" [ref=e159]
+                        - generic [ref=e160]: 音乐
+                      - generic [ref=e161] [cursor=pointer]:
+                        - checkbox "体育" [ref=e162]
+                        - generic [ref=e163]: 体育
+                      - generic [ref=e164] [cursor=pointer]:
+                        - checkbox "历史" [ref=e165]
+                        - generic [ref=e166]: 历史
+                      - generic [ref=e167] [cursor=pointer]:
+                        - checkbox "地理" [ref=e168]
+                        - generic [ref=e169]: 地理
+                      - generic [ref=e170] [cursor=pointer]:
+                        - checkbox "文学" [ref=e171]
+                        - generic [ref=e172]: 文学
+                  - button "添加技能" [ref=e173] [cursor=pointer]
+                  - generic [ref=e174]:
+                    - generic [ref=e175]: 知识领域
+                    - group "知识领域" [ref=e176]:
+                      - generic [ref=e177]:
+                        - checkbox "STEM" [ref=e178]
+                        - generic [ref=e179]: STEM
+                      - generic [ref=e180]:
+                        - checkbox "人文学科" [ref=e181]
+                        - generic [ref=e182]: 人文学科
+                      - generic [ref=e183]:
+                        - checkbox "艺术" [ref=e184]
+                        - generic [ref=e185]: 艺术
+                      - generic [ref=e186]:
+                        - checkbox "社会科学" [ref=e187]
+                        - generic [ref=e188]: 社会科学
+                      - generic [ref=e189]:
+                        - checkbox "商业" [ref=e190]
+                        - generic [ref=e191]: 商业
+                      - generic [ref=e192]:
+                        - checkbox "健康" [ref=e193]
+                        - generic [ref=e194]: 健康
+                  - generic [ref=e195]:
+                    - generic [ref=e196]: 专长领域
+                    - textbox "专长领域" [ref=e197]:
+                      - /placeholder: 例如：初中数学、高中物理
+              - generic [ref=e198]:
+                - heading "外观自定义" [level=2] [ref=e199]
+                - generic [ref=e200]:
+                  - generic [ref=e201]:
+                    - generic [ref=e202]: 头像模板
+                    - generic [ref=e203]:
+                      - button "🤖 经典" [ref=e204] [cursor=pointer]:
+                        - generic [ref=e205]: 🤖
+                        - generic [ref=e206]: 经典
+                      - button "🤖 活力" [ref=e207] [cursor=pointer]:
+                        - generic [ref=e208]: 🤖
+                        - generic [ref=e209]: 活力
+                      - button "🤖 专业" [ref=e210] [cursor=pointer]:
+                        - generic [ref=e211]: 🤖
+                        - generic [ref=e212]: 专业
+                      - button "🤖 创意" [ref=e213] [cursor=pointer]:
+                        - generic [ref=e214]: 🤖
+                        - generic [ref=e215]: 创意
+                  - generic [ref=e216]:
+                    - generic [ref=e217]:
+                      - generic [ref=e218]: 体型
+                      - combobox [ref=e219]:
+                        - option "苗条"
+                        - option "标准" [selected]
+                        - option "健壮"
+                        - option "圆润"
+                    - generic [ref=e220]:
+                      - generic [ref=e221]: 头型
+                      - combobox [ref=e222]:
+                        - option "圆形" [selected]
+                        - option "椭圆"
+                        - option "方形"
+                        - option "心形"
+                  - generic [ref=e223]:
+                    - generic [ref=e224]: 主色调
+                    - textbox [ref=e225]: "#4f46e5"
+                  - generic [ref=e226]:
+                    - generic [ref=e227]: 🤖
+                    - paragraph [ref=e228]: "预览：average / round / #4F46E5"
+                  - generic [ref=e229]:
+                    - generic [ref=e230]: 上传自定义头像
+                    - button "Choose File" [ref=e231]
+              - generic [ref=e232]:
+                - heading "行为模式" [level=2] [ref=e233]
+                - generic [ref=e234]:
+                  - generic [ref=e235]:
+                    - generic [ref=e236]: 行为模式
+                    - combobox [ref=e237]:
+                      - option "主动"
+                      - option "被动"
+                      - option "平衡" [selected]
+                  - generic [ref=e238]:
+                    - generic [ref=e239]: 回复风格
+                    - generic [ref=e240]:
+                      - generic [ref=e241]:
+                        - radio "简洁" [checked] [ref=e242]
+                        - generic [ref=e243]: 简洁
+                      - generic [ref=e244]:
+                        - radio "详细" [ref=e245]
+                        - generic [ref=e246]: 详细
+                      - generic [ref=e247]:
+                        - radio "苏格拉底式" [ref=e248]
+                        - generic [ref=e249]: 苏格拉底式
+                      - generic [ref=e250]:
+                        - radio "故事化" [ref=e251]
+                        - generic [ref=e252]: 故事化
+                  - generic [ref=e253]:
+                    - generic [ref=e254]: 互动频率
+                    - combobox [ref=e255]:
+                      - option "低"
+                      - option "中" [selected]
+                      - option "高"
+                  - generic [ref=e257]:
+                    - checkbox "自动问候" [checked] [ref=e258]
+                    - generic [ref=e259]: 自动问候
+                  - generic [ref=e260]:
+                    - generic [ref=e261]: 提示频率
+                    - combobox [ref=e262]:
+                      - option "从不"
+                      - option "仅在请求时" [selected]
+                      - option "偶尔"
+                      - option "频繁"
+                  - generic [ref=e263]:
+                    - generic [ref=e264]: 反馈风格
+                    - generic [ref=e265]:
+                      - generic [ref=e266]:
+                        - radio "积极" [ref=e267]
+                        - generic [ref=e268]: 积极
+                      - generic [ref=e269]:
+                        - radio "建设性" [checked] [ref=e270]
+                        - generic [ref=e271]: 建设性
+                      - generic [ref=e272]:
+                        - radio "直接" [ref=e273]
+                        - generic [ref=e274]: 直接
+                      - generic [ref=e275]:
+                        - radio "温和" [ref=e276]
+                        - generic [ref=e277]: 温和
+              - generic [ref=e278]:
+                - heading "LLM 服务配置" [level=2] [ref=e279]
+                - generic [ref=e280]:
+                  - generic [ref=e281]:
+                    - generic [ref=e282]: LLM 提供商
+                    - combobox [ref=e283]:
+                      - option "Anthropic" [selected]
+                      - option "OpenAI"
+                      - option "Google"
+                      - option "Azure"
+                      - option "本地部署"
+                      - option "自定义"
+                  - generic [ref=e284]:
+                    - generic [ref=e285]: API Key
+                    - generic [ref=e286]:
+                      - textbox "sk-..." [ref=e287]
+                      - button "显示" [ref=e288] [cursor=pointer]
+                  - generic [ref=e289]:
+                    - generic [ref=e290]: API Base URL
+                    - textbox "https://api.example.com" [ref=e291]
+                  - generic [ref=e292]:
+                    - generic [ref=e293]: 模型
+                    - combobox [ref=e294]:
+                      - option "Claude Sonnet 4" [selected]
+                      - option "Claude Opus 4"
+                      - option "GPT-4"
+                      - option "GPT-4 Turbo"
+                      - option "Gemini Pro"
+                      - option "自定义"
+                  - button "测试连接" [ref=e295] [cursor=pointer]
+                  - generic [ref=e296]:
+                    - generic [ref=e297]: 温度 (Temperature)
+                    - slider [ref=e298]: "0.7"
+                    - text: "0.7"
+                  - generic [ref=e299]:
+                    - generic [ref=e300]: 最大 Token
+                    - spinbutton [ref=e301]: "4096"
+                  - generic [ref=e302]:
+                    - generic [ref=e303]: 上下文长度
+                    - spinbutton [ref=e304]: "8192"
+              - generic [ref=e305]:
+                - button "创建智能体" [ref=e306] [cursor=pointer]
+                - button "取消" [ref=e307] [cursor=pointer]
+  - alert [ref=e308]

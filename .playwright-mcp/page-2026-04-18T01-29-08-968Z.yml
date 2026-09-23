@@ -1,0 +1,7 @@
+- main [ref=e2]:
+  - heading "可视项目式学习平台" [level=1] [ref=e3]
+  - paragraph [ref=e4]: 扮演 CEO，调度智能体，完成项目挑战！
+  - generic [ref=e5]:
+    - link "开始学习" [ref=e6] [cursor=pointer]:
+      - /url: /auth/login
+    - button "查看作品" [ref=e7] [cursor=pointer]

@@ -93,10 +93,20 @@ export default function WorkDetailPage() {
     if (!work) return
 
     try {
-      // TODO: Implement like API
-      const newLiked = !liked
-      setLiked(newLiked)
-      setLikeCount(prev => newLiked ? prev + 1 : prev - 1)
+      // 调用 like API，由后端从 session 获取当前用户
+      const res = await fetch(`/api/works/${workId}/like`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        setLiked(data.liked)
+        setLikeCount(data.likeCount)
+      } else if (res.status === 401) {
+        // 未登录，跳转到登录页面
+        router.push('/auth/login')
+      }
     } catch (err) {
       console.error('Failed to toggle like:', err)
     }

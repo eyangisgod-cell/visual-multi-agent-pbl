@@ -114,6 +114,7 @@ export class Player {
       // Movement keys
       if (['w', 'arrowup', 's', 'arrowdown', 'a', 'arrowleft', 'd', 'arrowright'].includes(key)) {
         this.keysPressed.add(key)
+        this.isMoving = true
         e.preventDefault()
       }
 
@@ -126,10 +127,11 @@ export class Player {
     const handleKeyUp = (e: KeyboardEvent) => {
       const key = e.key.toLowerCase()
       this.keysPressed.delete(key)
+      this.isMoving = this.keysPressed.size > 0
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
+    window.addEventListener('keydown', handleKeyDown, { capture: false })
+    window.addEventListener('keyup', handleKeyUp, { capture: false })
 
     // Store cleanup reference
     ;(this.container as Container & { _cleanup?: () => void })._cleanup = () => {

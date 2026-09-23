@@ -1,0 +1,64 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - heading "管理后台" [level=1] [ref=e6]
+          - button "◀" [ref=e7] [cursor=pointer]
+        - navigation [ref=e8]:
+          - link "📊 仪表盘" [ref=e9] [cursor=pointer]:
+            - /url: /admin
+            - generic [ref=e10]: 📊
+            - generic [ref=e11]: 仪表盘
+          - link "📁 项目管理" [ref=e12] [cursor=pointer]:
+            - /url: /admin/projects
+            - generic [ref=e13]: 📁
+            - generic [ref=e14]: 项目管理
+          - link "🤖 智能体管理" [ref=e15] [cursor=pointer]:
+            - /url: /admin/agents
+            - generic [ref=e16]: 🤖
+            - generic [ref=e17]: 智能体管理
+          - link "🧠 LLM 配置" [ref=e18] [cursor=pointer]:
+            - /url: /admin/llm
+            - generic [ref=e19]: 🧠
+            - generic [ref=e20]: LLM 配置
+          - link "👥 用户管理" [ref=e21] [cursor=pointer]:
+            - /url: /admin/users
+            - generic [ref=e22]: 👥
+            - generic [ref=e23]: 用户管理
+          - link "🎬 场景模板" [ref=e24] [cursor=pointer]:
+            - /url: /admin/scenes
+            - generic [ref=e25]: 🎬
+            - generic [ref=e26]: 场景模板
+          - link "⚙️ 系统设置" [ref=e27] [cursor=pointer]:
+            - /url: /admin/settings
+            - generic [ref=e28]: ⚙️
+            - generic [ref=e29]: 系统设置
+        - link "🏠 返回首页" [ref=e31] [cursor=pointer]:
+          - /url: /
+          - generic [ref=e32]: 🏠
+          - generic [ref=e33]: 返回首页
+    - main [ref=e34]:
+      - generic [ref=e36]:
+        - generic [ref=e37]:
+          - heading "管理后台仪表盘" [level=1] [ref=e38]
+          - paragraph [ref=e39]: 欢迎来到管理后台，查看系统概览和数据统计
+        - generic [ref=e42]:
+          - heading "快速操作" [level=2] [ref=e43]
+          - generic [ref=e44]:
+            - link "📁 创建新项目 添加新的项目式学习任务" [ref=e45] [cursor=pointer]:
+              - /url: /admin/projects/new
+              - generic [ref=e46]: 📁
+              - generic [ref=e47]: 创建新项目
+              - generic [ref=e48]: 添加新的项目式学习任务
+            - link "🤖 创建智能体 配置新的 AI 助手" [ref=e49] [cursor=pointer]:
+              - /url: /admin/agents/new
+              - generic [ref=e50]: 🤖
+              - generic [ref=e51]: 创建智能体
+              - generic [ref=e52]: 配置新的 AI 助手
+            - link "🧠 配置 LLM 管理大模型连接" [ref=e53] [cursor=pointer]:
+              - /url: /admin/llm
+              - generic [ref=e54]: 🧠
+              - generic [ref=e55]: 配置 LLM
+              - generic [ref=e56]: 管理大模型连接
+  - alert [ref=e57]

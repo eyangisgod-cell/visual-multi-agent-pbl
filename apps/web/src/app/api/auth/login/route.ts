@@ -146,6 +146,15 @@ export async function POST(request: NextRequest) {
       path: '/'
     })
 
+    // Set user role cookie for middleware
+    response.cookies.set('user-role', user.role || 'user', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 7, // 7 days
+      path: '/'
+    })
+
     return response
   } catch (error) {
     console.error('Login error:', error)

@@ -1,7 +1,10 @@
-module.exports = {
-  preset: 'ts-jest',
-  testEnvironment: 'jsdom',
-  setupFiles: ['jest-canvas-mock'],
+const nextJest = require('next/jest')
+
+const createJestConfig = nextJest({
+  dir: './',
+})
+
+const customJestConfig = {
   setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
@@ -18,11 +21,6 @@ module.exports = {
   transformIgnorePatterns: [
     '<rootDir>/node_modules/(?!(chart.js|react-chartjs-2)/)',
   ],
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        jsx: 'react-jsx',
-      },
-    },
-  },
 }
+
+module.exports = createJestConfig(customJestConfig)
