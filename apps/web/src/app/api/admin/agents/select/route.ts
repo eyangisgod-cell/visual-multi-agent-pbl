@@ -29,6 +29,30 @@ export async function POST(request: NextRequest) {
     const body: AgentSelectRequest = await request.json()
     const { agentId, projectId } = body
 
+    // 从 session 获取当前用户 ID
+    const sessionToken = request.cookies.get('session')?.value
+    if (!sessionToken) {
+      return NextResponse.json(
+        { success: false, message: '请先登录' },
+        { status: 401 }
+      )
+    }
+
+    // 验证 session 并获取用户 ID
+    const session = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      include: { user: true },
+    })
+
+    if (!session || session.expiresAt < new Date()) {
+      return NextResponse.json(
+        { success: false, message: '会话已过期' },
+        { status: 401 }
+      )
+    }
+
+    const userId = session.userId
+
     if (!agentId) {
       return NextResponse.json(
         { success: false, message: '智能体 ID 不能为空' },
@@ -36,7 +60,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Validate agent exists
+    // 验证智能体是否存在
     const agent = await prisma.agent.findUnique({
       where: { id: agentId },
     })
@@ -48,11 +72,34 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // TODO: For now, we just validate the agent exists
-    // In a real scenario, you would save the selection to a database table
-    // For example, create a UserAgent record or update a ProjectAgent selection table
+    // 保存智能体选择到 UserAgent 表
+    const userAgent = await prisma.userAgent.upsert({
+      where: {
+        userId_agentId: {
+          userId,
+          agentId,
+        },
+      },
+      update: {
+        usage_count: { increment: 1 },
+      },
+      create: {
+        userId,
+        agentId,
+        usage_count: 1,
+      },
+    })
 
-    console.log('Selecting agent:', agentId, 'for project:', projectId)
+    console.log('UserAgent created/updated:', userAgent.id)
+
+    // 如果关联了项目，更新 ProjectTask 的 agentType
+    if (projectId) {
+      await prisma.projectTask.updateMany({
+        where: { projectId },
+        data: { agentType: agent.agentType },
+      })
+      console.log('ProjectTask updated for project:', projectId)
+    }
 
     return NextResponse.json({
       success: true,

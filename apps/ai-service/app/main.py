@@ -7,6 +7,7 @@ from app.api import health, auth
 from app.api.agents import router as agents_router
 from app.api import projects, tasks, memory
 from app.api import websocket
+from app.api import llm as llm_router
 from app.db import init_db, close_db
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.security import SecurityMiddleware
@@ -77,6 +78,7 @@ app.include_router(agents_router, prefix="/api/v1", tags=["agents"])
 app.include_router(projects.router, prefix="/api/v1", tags=["projects"])
 app.include_router(tasks.router, prefix="/api/v1", tags=["tasks"])
 app.include_router(memory.router, prefix="/api/v1", tags=["memory"])
+app.include_router(llm_router.router, prefix="/api/v1", tags=["llm"])
 app.include_router(websocket.router, prefix="/ws", tags=["websocket"])
 
 @app.get("/")

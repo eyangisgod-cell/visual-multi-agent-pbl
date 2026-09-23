@@ -2,10 +2,6 @@
 
 > 🎓 面向 K12 学生的多智能体游戏化项目式学习平台
 
-**版本**: 0.1.0 (设计阶段)
-**创建日期**: 2026-03-21
-**状态**: 📐 设计完成，待开发
-
 ---
 
 ## 📖 项目简介
@@ -43,26 +39,6 @@
 │  部署：Docker Compose → 阿里云 ACK                             │
 └─────────────────────────────────────────────────────────────────┘
 ```
-
----
-
-## 📁 文档目录
-
-### 设计文档
-
-| 文档 | 说明 | 路径 |
-|------|------|------|
-| **系统设计文档** | 完整的功能设计、技术栈选型、架构设计 | [`docs/superpowers/2026-03-21-visual-pbl-platform-design.md`](./docs/superpowers/2026-03-21-visual-pbl-platform-design.md) |
-| **技术架构详解** | 架构演进路线、部署配置、数据流设计 | [`docs/superpowers/2026-03-21-technical-architecture.md`](./docs/superpowers/2026-03-21-technical-architecture.md) |
-| **设计决策记录** | 12 个关键架构决策的背景和理由 (ADR) | [`docs/superpowers/2026-03-21-architecture-decisions.md`](./docs/superpowers/2026-03-21-architecture-decisions.md) |
-| **待解决问题** | 技术风险、产品问题、合规问题跟踪清单 | [`docs/superpowers/2026-03-21-pending-issues.md`](./docs/superpowers/2026-03-21-pending-issues.md) |
-
-### 快速导航
-
-- 🎯 [系统设计概览](./docs/superpowers/2026-03-21-visual-pbl-platform-design.md) - 了解完整功能和技术栈
-- 🏛️ [技术架构详解](./docs/superpowers/2026-03-21-technical-architecture.md) - 查看部署架构和配置
-- 📝 [设计决策记录](./docs/superpowers/2026-03-21-architecture-decisions.md) - 理解为什么这样选择
-- ⚠️ [待解决问题](./docs/superpowers/2026-03-21-pending-issues.md) - 了解风险和挑战
 
 ---
 
@@ -174,28 +150,6 @@
 - 面向未成年人付费合规
 - 算法备案要求
 
-详见：[待解决问题清单](./docs/superpowers/2026-03-21-pending-issues.md)
-
----
-
-## 🚀 下一步行动
-
-1. **调用 `superpowers:writing-plans`** - 生成详细实施计划
-2. **Phase 1 开发** - 按 MVP 范围迭代
-3. **每周用户测试** - 收集 K12 学生反馈
-4. **数据驱动优化** - 根据使用数据调整功能
-
----
-
-## 📚 参考资源
-
-### 开源项目
-
-| 项目 | URL | 可借鉴点 |
-|------|-----|----------|
-| **ai-town** | https://github.com/a16z-infra/ai-town | 游戏化界面、智能体可视化 |
-| **AG2** | https://github.com/ag2ai/ag2 | 多智能体编排、Group Chat |
-| **AG2 Playground** | https://playground.ag2.ai/ | 智能体调试界面 |
 
 ### 技术文档
 

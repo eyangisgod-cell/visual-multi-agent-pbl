@@ -1,4 +1,8 @@
 {
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "figma"
+  ],
   "permissions": {
     "allow": [
       "^cd .+ && .+$",
@@ -65,7 +69,12 @@
       "Bash(cp:*)",
       "Bash(gh run:*)",
       "Bash(grep -n \"drawArc\\\\|\\\\.lineStyle\" /e/my-project/visual-multi-agent-pbl/.worktrees/phase-7/apps/web/src/components/game/agents/*.ts)",
-      "Bash(./node_modules/.bin/tsc --noEmit)"
+      "Bash(./node_modules/.bin/tsc --noEmit)",
+      "Bash(psql -U postgres -h localhost -d pbl_platform -c \"\\\\dt knowledge_documents\")",
+      "Bash(npx prisma *)",
+      "Bash(python -m py_compile app/api/llm.py app/llm/anthropic.py)",
+      "Bash(npx playwright *)",
+      "Bash(python -c \"from app.api.llm import router; print\\('AI Service imports OK'\\)\")"
     ]
   }
 }

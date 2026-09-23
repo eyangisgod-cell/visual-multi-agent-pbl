@@ -9,28 +9,30 @@ datasource db {
 }
 
 model User {
-  id              String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username        String?       @unique @db.VarChar(50)
-  password_hash   String?       @db.VarChar(255)
-  nickname        String?       @db.VarChar(50)
+  id              String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username        String?            @unique @db.VarChar(50)
+  password_hash   String?            @db.VarChar(255)
+  nickname        String?            @db.VarChar(50)
   avatar_url      String?
   grade           Int?
-  invitation_code String        @unique @db.VarChar(10)
-  invited_by      String?       @db.Uuid
-  points          Int?          @default(0)
-  level           Int?          @default(1)
-  abilities       Json?         @default("{}")
-  created_at      DateTime?     @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime?     @default(now()) @db.Timestamptz(6)
-  deleted_at      DateTime?     @db.Timestamptz(6)
-  role            String?       @default("USER") @db.VarChar(20)
-  works           Work[]
+  invitation_code String             @unique @db.VarChar(10)
+  invited_by      String?            @db.Uuid
+  points          Int?               @default(0)
+  level           Int?               @default(1)
+  abilities       Json?              @default("{}")
+  created_at      DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?          @default(now()) @db.Timestamptz(6)
+  deleted_at      DateTime?          @db.Timestamptz(6)
+  role            String?            @default("USER") @db.VarChar(20)
+  friends         Friend[]           @relation("UserFriends")
+  notifications   Notification[]
+  redemptions     PointsRedemption[] @relation("UserRedemptions")
+  assignedTasks   ProjectTask[]      @relation("AssignedTasks")
+  wechatBindings  WechatBinding[]
   comments        WorkComment[]
-  assignedTasks   ProjectTask[] @relation("AssignedTasks")
   likes           WorkLike[]
   WorkReview      WorkReview[]
-  notifications   Notification[]
-  wechatBindings  WechatBinding[]
+  works           Work[]
 
   @@index([invitation_code], map: "idx_users_invitation_code")
   @@index([username], map: "idx_users_username")
@@ -101,9 +103,9 @@ model Project {
   created_by        String?       @db.Uuid
   completed_count   Int?          @default(0)
   like_count        Int?          @default(0)
-  rubricCriteria    Json?         @map("rubric_criteria")
   createdAt         DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rubricCriteria    Json?         @map("rubric_criteria")
   tasks             ProjectTask[]
   works             Work[]
 
@@ -122,15 +124,15 @@ model ProjectTask {
   expected_output   String?
   rubric            Json?
   prerequisites     String[]  @db.Uuid
+  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
   assignedTo        String?   @map("assigned_to") @db.Uuid
   dueDate           DateTime? @map("due_date") @db.Timestamptz(6)
-  status            String?   @default("todo") @db.VarChar(20)
   rubricScores      Json?     @map("rubric_scores")
-  submissionContent String?   @map("submission_content") @db.Text
-  createdAt         DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  status            String?   @default("todo") @db.VarChar(20)
+  submissionContent String?   @map("submission_content")
   updatedAt         DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  assignedUser      User?     @relation("AssignedTasks", fields: [assignedTo], references: [id])
   project           Project   @relation(fields: [projectId], references: [id])
-  assignedUser      User?     @relation(fields: [assignedTo], references: [id], name: "AssignedTasks")
 
   @@index([projectId], map: "idx_project_tasks_project_id")
   @@index([assignedTo], map: "idx_project_tasks_assigned_to")
@@ -143,18 +145,18 @@ model Work {
   description   String?
   coverImageUrl String?       @map("cover_image_url") @db.VarChar(500)
   content       String?
-  status        String?       @default("draft") @db.VarChar(20) // draft, pending_review, published, rejected
+  status        String?       @default("draft") @db.VarChar(20)
   score         Int?          @default(0)
   is_premium    Boolean?      @default(false)
   projectId     String        @map("project_id") @db.Uuid
   userId        String        @map("user_id") @db.Uuid
   createdAt     DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt     DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  project       Project       @relation(fields: [projectId], references: [id])
-  user          User          @relation(fields: [userId], references: [id])
   comments      WorkComment[]
   likes         WorkLike[]
   reviews       WorkReview[]
+  project       Project       @relation(fields: [projectId], references: [id])
+  user          User          @relation(fields: [userId], references: [id])
 
   @@index([projectId], map: "idx_works_project_id")
   @@index([userId], map: "idx_works_user_id")
@@ -170,10 +172,10 @@ model WorkComment {
   parentId  String?       @map("parent_id") @db.Uuid
   createdAt DateTime?     @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime?     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  work      Work          @relation(fields: [workId], references: [id])
-  user      User          @relation(fields: [userId], references: [id])
-  parent    WorkComment?  @relation("CommentReplies", fields: [parentId], references: [id])
+  parent    WorkComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
   replies   WorkComment[] @relation("CommentReplies")
+  user      User          @relation(fields: [userId], references: [id])
+  work      Work          @relation(fields: [workId], references: [id])
 
   @@index([workId], map: "idx_work_comments_work_id")
   @@map("work_comments")
@@ -184,8 +186,8 @@ model WorkLike {
   workId    String   @map("work_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  work      Work     @relation(fields: [workId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
+  work      Work     @relation(fields: [workId], references: [id])
 
   @@unique([workId, userId])
   @@index([workId], map: "idx_work_likes_work_id")
@@ -196,12 +198,12 @@ model WorkReview {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   workId    String   @map("work_id") @db.Uuid
   userId    String   @map("user_id") @db.Uuid
-  rating    Int?     @map("rating") @db.Integer // 1-5 分，可选
-  comment   String   @db.Text
+  rating    Int?     @map("rating")
+  comment   String
   createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
   user      User     @relation(fields: [userId], references: [id])
+  work      Work     @relation(fields: [workId], references: [id], onDelete: Cascade)
 
   @@index([workId], map: "idx_work_reviews_work_id")
   @@index([userId], map: "idx_work_reviews_user_id")
@@ -272,7 +274,6 @@ model AgentAvatar {
   @@map("agent_avatars")
 }
 
-// LLM 配置表
 model LlmConfig {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   provider  String   @unique @db.VarChar(50)
@@ -287,12 +288,11 @@ model LlmConfig {
   @@map("llm_configs")
 }
 
-// 智能体配置表
 model AgentConfig {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   agentType   String   @unique @map("agent_type") @db.VarChar(50)
   name        String   @db.VarChar(100)
-  description String?  @db.Text
+  description String?
   personality Json?
   skills      Json?
   appearance  Json?
@@ -324,12 +324,11 @@ model AuditLog {
   @@map("audit_logs")
 }
 
-// 安全日志表 - 记录安全相关事件
 model SecurityLog {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  eventType   String   @map("event_type") @db.VarChar(50) // sql_injection, xss, csrf_failure, rate_limit, auth_failure
-  severity    String   @db.VarChar(20) // low, medium, high, critical
-  description String   @db.Text
+  eventType   String   @map("event_type") @db.VarChar(50)
+  severity    String   @db.VarChar(20)
+  description String
   ipAddress   String?  @map("ip_address") @db.VarChar(45)
   userAgent   String?  @map("user_agent") @db.VarChar(500)
   userId      String?  @map("user_id") @db.Uuid
@@ -346,12 +345,11 @@ model SecurityLog {
   @@map("security_logs")
 }
 
-// RBAC 角色表
 model AdminRole {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String   @unique @db.VarChar(50)
-  description String?  @db.Text
-  permissions Json?    @default("[]") @db.JsonB // 权限 key 数组
+  description String?
+  permissions Json?    @default("[]")
   isBuiltIn   Boolean  @default(false) @map("is_built_in")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -360,7 +358,6 @@ model AdminRole {
   @@map("admin_roles")
 }
 
-// 对话表 - 用于存储用户与智能体的对话历史
 model Conversation {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId    String    @map("user_id") @db.Uuid
@@ -376,12 +373,11 @@ model Conversation {
   @@map("conversations")
 }
 
-// 消息表 - 存储对话中的具体消息
 model Message {
   id             String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   conversationId String       @map("conversation_id") @db.Uuid
-  role           MessageRole  // user, assistant, system
-  content        String       @db.Text
+  role           MessageRole
+  content        String
   metadata       Json?        @map("metadata")
   createdAt      DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -389,6 +385,245 @@ model Message {
   @@index([conversationId], map: "idx_messages_conversation_id")
   @@index([createdAt], map: "idx_messages_created_at")
   @@map("messages")
+}
+
+model KnowledgeDocument {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  title     String   @db.VarChar(255)
+  content   String
+  category  String?  @db.VarChar(100)
+  tags      String[]
+  embedding Bytes?   @db.ByteA
+  metadata  Json?    @map("metadata")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([category], map: "idx_knowledge_documents_category")
+  @@index([createdAt], map: "idx_knowledge_documents_created_at")
+  @@map("knowledge_documents")
+}
+
+model KnowledgeCategory {
+  id          String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String              @unique @db.VarChar(100)
+  description String?
+  parentId    String?             @db.Uuid
+  createdAt   DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  parent      KnowledgeCategory?  @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children    KnowledgeCategory[] @relation("CategoryHierarchy")
+
+  @@index([parentId], map: "idx_knowledge_categories_parent_id")
+  @@map("knowledge_categories")
+}
+
+model Scene {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String   @db.VarChar(100)
+  description String?
+  elements    Json?
+  resources   Json?
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive], map: "idx_scenes_is_active")
+  @@map("scenes")
+}
+
+model SystemSetting {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  key       String   @unique @db.VarChar(100)
+  value     Json?
+  category  String?  @db.VarChar(50)
+  updatedAt DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([category], map: "idx_system_settings_category")
+  @@map("system_settings")
+}
+
+model Notification {
+  id        String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  type      NotificationType @default(info) @map("type")
+  title     String           @db.VarChar(255)
+  content   String
+  isRead    Boolean          @default(false) @map("is_read")
+  actionUrl String?          @map("action_url") @db.VarChar(500)
+  metadata  Json?            @map("metadata")
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
+  readAt    DateTime?        @map("read_at") @db.Timestamptz(6)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_notifications_user_id")
+  @@index([isRead], map: "idx_notifications_is_read")
+  @@index([createdAt], map: "idx_notifications_created_at")
+  @@map("notifications")
+}
+
+model PointsLog {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String   @map("user_id") @db.Uuid
+  points      Int
+  balance     Int
+  action      String   @db.VarChar(50)
+  description String
+  metadata    Json?    @map("metadata")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([userId], map: "idx_points_logs_user_id")
+  @@index([action], map: "idx_points_logs_action")
+  @@index([createdAt], map: "idx_points_logs_created_at")
+  @@map("points_logs")
+}
+
+model PointsRule {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  action      String   @unique @db.VarChar(50)
+  points      Int
+  description String?
+  isActive    Boolean  @default(true) @map("is_active")
+  metadata    Json?    @map("metadata")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([action], map: "idx_points_rules_action")
+  @@map("points_rules")
+}
+
+model UserLevel {
+  level      Int      @id
+  name       String   @db.VarChar(50)
+  minPoints  Int      @map("min_points")
+  maxPoints  Int?     @map("max_points")
+  privileges Json?    @map("privileges")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@map("user_levels")
+}
+
+model PointsReward {
+  id          String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String             @db.VarChar(100)
+  description String?
+  cost        Int
+  type        String             @default("virtual") @db.VarChar(50)
+  stock       Int?
+  imageUrl    String?            @map("image_url") @db.VarChar(500)
+  metadata    Json?              @map("metadata")
+  isActive    Boolean            @default(true) @map("is_active")
+  createdAt   DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  redemptions PointsRedemption[] @relation("RewardRedemptions")
+
+  @@index([isActive], map: "idx_points_rewards_is_active")
+  @@index([cost], map: "idx_points_rewards_cost")
+  @@map("points_rewards")
+}
+
+model PointsRedemption {
+  id         String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String       @map("user_id") @db.Uuid
+  rewardId   String       @map("reward_id") @db.Uuid
+  quantity   Int          @default(1)
+  pointsCost Int          @map("points_cost")
+  status     String       @default("pending") @db.VarChar(20)
+  metadata   Json?        @map("metadata")
+  createdAt  DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  reward     PointsReward @relation("RewardRedemptions", fields: [rewardId], references: [id])
+  user       User         @relation("UserRedemptions", fields: [userId], references: [id])
+
+  @@index([userId], map: "idx_points_redemptions_user_id")
+  @@index([rewardId], map: "idx_points_redemptions_reward_id")
+  @@index([status], map: "idx_points_redemptions_status")
+  @@index([createdAt], map: "idx_points_redemptions_created_at")
+  @@map("points_redemptions")
+}
+
+model WechatConfig {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  appId          String   @db.VarChar(100)
+  appSecret      String   @db.VarChar(500)
+  token          String?  @db.VarChar(500)
+  encodingAesKey String?  @db.VarChar(500)
+  isActive       Boolean  @default(false) @map("is_active")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([isActive], map: "idx_wechat_configs_is_active")
+  @@map("wechat_configs")
+}
+
+model WechatBinding {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String    @map("user_id") @db.Uuid
+  wechatOpenid   String    @unique @map("wechat_openid") @db.VarChar(100)
+  wechatUnionid  String?   @db.VarChar(100)
+  nickname       String?   @db.VarChar(100)
+  avatarUrl      String?   @map("avatar_url") @db.VarChar(500)
+  gender         Int?
+  language       String?   @db.VarChar(20)
+  city           String?   @db.VarChar(50)
+  province       String?   @db.VarChar(50)
+  country        String?   @db.VarChar(50)
+  accessToken    String?   @db.VarChar(1000)
+  refreshToken   String?   @db.VarChar(1000)
+  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz(6)
+  boundAt        DateTime  @default(now()) @map("bound_at") @db.Timestamptz(6)
+  lastLoginAt    DateTime? @map("last_login_at") @db.Timestamptz(6)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt      DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_wechat_bindings_user_id")
+  @@index([wechatOpenid], map: "idx_wechat_bindings_wechat_openid")
+  @@index([wechatUnionid], map: "idx_wechat_bindings_wechat_unionid")
+  @@map("wechat_bindings")
+}
+
+model WechatLoginSession {
+  id           String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sessionKey   String   @unique @map("session_key") @db.VarChar(100)
+  wechatOpenid String?  @db.VarChar(100)
+  status       String   @default("pending") @db.VarChar(20)
+  expiresAt    DateTime @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([sessionKey], map: "idx_wechat_login_sessions_session_key")
+  @@index([status], map: "idx_wechat_login_sessions_status")
+  @@map("wechat_login_sessions")
+}
+
+model UploadChunk {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  fileHash    String   @map("file_hash") @db.VarChar(64)
+  chunkIndex  Int      @map("chunk_index")
+  totalChunks Int      @map("total_chunks")
+  fileName    String   @map("file_name") @db.VarChar(255)
+  mimeType    String?  @map("mime_type") @db.VarChar(255)
+  fileSize    Int?     @map("file_size")
+  uploadedAt  DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(6)
+
+  @@index([fileHash], map: "idx_upload_chunks_file_hash")
+  @@index([fileHash, chunkIndex], map: "idx_upload_chunks_file_hash_chunk_index")
+  @@map("upload_chunks")
+}
+
+model Friend {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  friendId  String   @map("friend_id") @db.Uuid
+  status    String   @default("pending") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@index([userId], map: "idx_friends_user_id")
+  @@index([friendId], map: "idx_friends_friend_id")
+  @@index([status], map: "idx_friends_status")
+  @@map("friends")
 }
 
 enum Role {
@@ -418,83 +653,6 @@ enum MessageRole {
   system
 }
 
-// 知识库文档表 - 用于 RAG 系统
-model KnowledgeDocument {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  title     String   @db.VarChar(255)
-  content   String   @db.Text
-  category  String?  @db.VarChar(100)
-  tags      String[]
-  metadata  Json?    @map("metadata")
-  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([category], map: "idx_knowledge_documents_category")
-  @@index([createdAt], map: "idx_knowledge_documents_created_at")
-  @@map("knowledge_documents")
-}
-
-// 知识库分类表
-model KnowledgeCategory {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   @unique @db.VarChar(100)
-  description String?  @db.Text
-  parentId    String?  @db.Uuid
-  parent      KnowledgeCategory? @relation("CategoryHierarchy", fields: [parentId], references: [id])
-  children    KnowledgeCategory[] @relation("CategoryHierarchy")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([parentId], map: "idx_knowledge_categories_parent_id")
-  @@map("knowledge_categories")
-}
-
-// 场景模板表 - 用于游戏场景配置
-model Scene {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  name        String   @db.VarChar(100)
-  description String?  @db.Text
-  elements    Json?    // 场景元素配置
-  resources   Json?    // 关联资源
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([isActive], map: "idx_scenes_is_active")
-  @@map("scenes")
-}
-
-// 系统设置表 - 用于存储各种系统配置
-model SystemSetting {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  key       String   @unique @db.VarChar(100)
-  value     Json?
-  category  String?  @db.VarChar(50)
-  updatedAt DateTime @default(now()) @db.Timestamptz(6)
-
-  @@index([category], map: "idx_system_settings_category")
-  @@map("system_settings")
-}
-
-// 通知表 - 用于系统通知
-model Notification {
-  id          String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String           @map("user_id") @db.Uuid
-  type        NotificationType @default(info) @map("type")
-  title       String           @db.VarChar(255)
-  content     String           @db.Text
-  isRead      Boolean          @default(false) @map("is_read")
-  actionUrl   String?          @map("action_url") @db.VarChar(500)
-  metadata    Json?            @map("metadata")
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
-  readAt      DateTime?        @map("read_at") @db.Timestamptz(6)
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "idx_notifications_user_id")
-  @@index([isRead], map: "idx_notifications_is_read")
-  @@index([createdAt], map: "idx_notifications_created_at")
-  @@map("notifications")
-}
-
 enum NotificationType {
   info
   success
@@ -503,122 +661,4 @@ enum NotificationType {
   task
   system
   achievement
-}
-
-// 积分记录表 - 记录用户积分变动
-model PointsLog {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  points      Int      // 积分变化量（正数增加，负数减少）
-  balance     Int      // 变动后的积分余额
-  action      String   @db.VarChar(50) // 积分动作类型：login, daily_bonus, submit_work, work_approved, work_rejected, manual_adjustment
-  description String   @db.Text
-  metadata    Json?    @map("metadata") // 额外元数据
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([userId], map: "idx_points_logs_user_id")
-  @@index([action], map: "idx_points_logs_action")
-  @@index([createdAt], map: "idx_points_logs_created_at")
-  @@map("points_logs")
-}
-
-// 积分规则配置表
-model PointsRule {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  action      String   @unique @db.VarChar(50) // 积分动作类型
-  points      Int      // 积分数值
-  description String?  @db.Text
-  isActive    Boolean  @default(true) @map("is_active")
-  metadata    Json?    @map("metadata")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([action], map: "idx_points_rules_action")
-  @@map("points_rules")
-}
-
-// 用户等级配置表
-model UserLevel {
-  level       Int    @id
-  name        String @db.VarChar(50) // 等级名称
-  minPoints   Int    @map("min_points") // 最低积分要求
-  maxPoints   Int?   @map("max_points") // 最高积分要求（可选，最高等级可为空）
-  privileges  Json?  @map("privileges") // 等级特权
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@map("user_levels")
-}
-
-// 微信 OAuth 配置表
-model WechatConfig {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  appId       String   @db.VarChar(100) // 微信公众号/开放平台 AppID
-  appSecret   String   @db.VarChar(500) // 微信公众号/开放平台 AppSecret
-  token       String?  @db.VarChar(500) // 微信公众号 Token
-  encodingAesKey String? @db.VarChar(500) // 微信公众号 EncodingAESKey
-  isActive    Boolean  @default(false) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-
-  @@index([isActive], map: "idx_wechat_configs_is_active")
-  @@map("wechat_configs")
-}
-
-// 微信用户绑定表
-model WechatBinding {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String   @map("user_id") @db.Uuid
-  wechatOpenid String  @unique @map("wechat_openid") @db.VarChar(100) // 微信 OpenID
-  wechatUnionid String? @db.VarChar(100) // 微信 UnionID（跨应用唯一）
-  nickname    String?  @db.VarChar(100) // 微信昵称
-  avatarUrl   String?  @map("avatar_url") @db.VarChar(500) // 微信头像
-  gender      Int?     // 性别：0-未知，1-男，2-女
-  language    String?  @db.VarChar(20) // 语言
-  city        String?  @db.VarChar(50) // 城市
-  province    String?  @db.VarChar(50) // 省份
-  country     String?  @db.VarChar(50) // 国家
-  accessToken String?  @db.VarChar(1000) // 微信访问令牌（用于刷新用户信息）
-  refreshToken String? @db.VarChar(1000) // 刷新令牌
-  tokenExpiresAt DateTime? @map("token_expires_at") @db.Timestamptz(6) // 令牌过期时间
-  boundAt     DateTime @default(now()) @map("bound_at") @db.Timestamptz(6)
-  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz(6)
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId], map: "idx_wechat_bindings_user_id")
-  @@index([wechatOpenid], map: "idx_wechat_bindings_wechat_openid")
-  @@index([wechatUnionid], map: "idx_wechat_bindings_wechat_unionid")
-  @@map("wechat_bindings")
-}
-
-// 微信登录会话表 - 用于扫码登录临时会话
-model WechatLoginSession {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sessionKey  String   @unique @map("session_key") @db.VarChar(100) // 临时会话 key
-  wechatOpenid String? @db.VarChar(100) // 扫码后的微信 OpenID
-  status      String   @default("pending") @db.VarChar(20) // pending, scanned, confirmed, expired, used
-  expiresAt   DateTime @db.Timestamptz(6) // 会话过期时间
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
-
-  @@index([sessionKey], map: "idx_wechat_login_sessions_session_key")
-  @@index([status], map: "idx_wechat_login_sessions_status")
-  @@map("wechat_login_sessions")
-}
-
-// 文件上传分片表 - 用于大文件分片上传和断点续传
-model UploadChunk {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  fileHash    String   @map("file_hash") @db.VarChar(64) // 文件 SHA256 哈希
-  chunkIndex  Int      @map("chunk_index") // 分片索引（从 0 开始）
-  totalChunks Int      @map("total_chunks") // 总分片数
-  fileName    String   @map("file_name") @db.VarChar(255) // 原始文件名
-  mimeType    String?  @map("mime_type") @db.VarChar(255) // 文件 MIME 类型
-  fileSize    Int?     @map("file_size") // 分片大小（字节）
-  uploadedAt  DateTime @default(now()) @map("uploaded_at") @db.Timestamptz(6)
-
-  @@index([fileHash], map: "idx_upload_chunks_file_hash")
-  @@index([fileHash, chunkIndex], map: "idx_upload_chunks_file_hash_chunk_index")
-  @@map("upload_chunks")
 }

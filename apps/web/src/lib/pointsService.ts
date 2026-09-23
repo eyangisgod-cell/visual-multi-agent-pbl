@@ -415,3 +415,230 @@ export async function initializeDefaultLevels(): Promise<void> {
     });
   }
 }
+
+/**
+ * 获取所有可用奖励
+ */
+export async function getAllRewards(options?: {
+  maxPoints?: number;
+  isActive?: boolean;
+}): Promise<any[]> {
+  const { maxPoints, isActive = true } = options || {};
+
+  const where: any = {};
+  if (isActive !== undefined) {
+    where.isActive = isActive;
+  }
+  if (maxPoints !== undefined) {
+    where.cost = { lte: maxPoints };
+  }
+
+  const rewards = await prisma.pointsReward.findMany({
+    where,
+    orderBy: { cost: 'asc' },
+  });
+
+  return rewards;
+}
+
+/**
+ * 获取单个奖励详情
+ */
+export async function getReward(rewardId: string): Promise<any | null> {
+  const reward = await prisma.pointsReward.findUnique({
+    where: { id: rewardId },
+  });
+  return reward;
+}
+
+/**
+ * 创建奖励
+ */
+export async function createReward(data: {
+  name: string;
+  description?: string;
+  cost: number;
+  type?: string;
+  stock?: number;
+  imageUrl?: string;
+  metadata?: Record<string, any>;
+  isActive?: boolean;
+}): Promise<any> {
+  return prisma.pointsReward.create({
+    data,
+  });
+}
+
+/**
+ * 兑换奖励
+ */
+export async function redeemReward(
+  userId: string,
+  rewardId: string,
+  quantity: number = 1,
+  metadata?: Record<string, any>
+): Promise<{ redemptionId: string; pointsDeducted: number; newBalance: number }> {
+  // 使用事务确保原子性
+  return prisma.$transaction(async (tx) => {
+    // 获取奖励信息
+    const reward = await tx.pointsReward.findUnique({
+      where: { id: rewardId },
+    });
+
+    if (!reward) {
+      throw new Error('Reward not found');
+    }
+
+    if (!reward.isActive) {
+      throw new Error('Reward is not active');
+    }
+
+    // 检查库存
+    if (reward.stock !== null && reward.stock < quantity) {
+      throw new Error('Insufficient stock');
+    }
+
+    // 计算总消耗积分
+    const totalCost = reward.cost * quantity;
+
+    // 获取用户当前积分
+    const user = await tx.user.findUnique({
+      where: { id: userId },
+      select: { points: true },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const currentPoints = user.points || 0;
+    if (currentPoints < totalCost) {
+      throw new Error('Insufficient points');
+    }
+
+    // 更新用户积分
+    const newBalance = currentPoints - totalCost;
+    await tx.user.update({
+      where: { id: userId },
+      data: { points: newBalance },
+    });
+
+    // 更新库存
+    if (reward.stock !== null) {
+      await tx.pointsReward.update({
+        where: { id: rewardId },
+        data: { stock: reward.stock - quantity },
+      });
+    }
+
+    // 创建兑换记录
+    const redemption = await tx.pointsRedemption.create({
+      data: {
+        userId,
+        rewardId,
+        quantity,
+        pointsCost: totalCost,
+        status: 'pending',
+        metadata,
+      },
+    });
+
+    // 创建积分扣除记录
+    await tx.pointsLog.create({
+      data: {
+        userId,
+        points: -totalCost,
+        balance: newBalance,
+        action: 'purchase',
+        description: `兑换奖励：${reward.name}`,
+        metadata: { redemptionId: redemption.id, rewardId, quantity },
+      },
+    });
+
+    // 检查并更新等级
+    const newLevel = await calculateLevelByPoints(newBalance);
+    if (newLevel !== currentPoints) {
+      await tx.user.update({
+        where: { id: userId },
+        data: { level: newLevel },
+      });
+    }
+
+    return {
+      redemptionId: redemption.id,
+      pointsDeducted: totalCost,
+      newBalance,
+    };
+  });
+}
+
+/**
+ * 获取用户兑换记录
+ */
+export async function getUserRedemptions(
+  userId: string,
+  options?: { limit?: number; offset?: number; status?: string }
+) {
+  const { limit = 20, offset = 0, status } = options || {};
+
+  const where: any = { userId };
+  if (status) {
+    where.status = status;
+  }
+
+  const redemptions = await prisma.pointsRedemption.findMany({
+    where,
+    include: {
+      reward: {
+        select: {
+          id: true,
+          name: true,
+          imageUrl: true,
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+    skip: offset,
+    take: limit,
+  });
+
+  const total = await prisma.pointsRedemption.count({ where });
+
+  return { redemptions, total };
+}
+
+/**
+ * 初始化默认奖励
+ */
+export async function initializeDefaultRewards(): Promise<void> {
+  const defaultRewards = [
+    {
+      name: '头像框 - 金牌',
+      description: '金色头像框，展示尊贵身份',
+      cost: 500,
+      type: 'virtual',
+      stock: null,
+      metadata: { itemType: 'avatar_frame', itemId: 'gold_frame' },
+    },
+    {
+      name: '专属表情',
+      description: '解锁专属表情包',
+      cost: 200,
+      type: 'virtual',
+      stock: null,
+      metadata: { itemType: 'emoji_pack', itemId: 'exclusive_emojis' },
+    },
+    {
+      name: '7 天 VIP',
+      description: '7 天 VIP 特权体验',
+      cost: 1000,
+      type: 'privilege',
+      stock: null,
+      metadata: { privilegeType: 'vip', duration: 7 },
+    },
+  ];
+
+  for (const reward of defaultRewards) {
+    await createReward(reward);
+  }
+}

@@ -98,8 +98,8 @@ export async function POST(request: NextRequest) {
         username: true,
         nickname: true,
         grade: true,
-        invitationCode: true,
-        createdAt: true
+        invitation_code: true,
+        created_at: true
       }
     })
 
@@ -111,7 +111,8 @@ export async function POST(request: NextRequest) {
           username: user.username,
           nickname: user.nickname,
           grade: user.grade,
-          invitationCode: user.invitationCode
+          invitationCode: user.invitation_code,
+          createdAt: user.created_at
         }
       },
       { status: 201 }

@@ -73,7 +73,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-// POST /api/admin/works/[id]/review - 添加新的评价
+// POST /api/admin/works/[id]/review - 添加新的评价 或 审核作品
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const workId = params.id;
@@ -93,8 +93,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     }
 
     const body = await request.json();
-    const { userId, rating, comment } = body;
+    const { userId, rating, comment, action, reason } = body;
 
+    // 检查是否是作品审核操作（action: 'approve' 或 'reject'）
+    if (action === 'approve' || action === 'reject') {
+      return handleWorkReview(request, workId, action, reason);
+    }
+
+    // 否则是作品评价操作
     if (!userId || !comment) {
       return NextResponse.json(
         { error: 'userId and comment are required' },
@@ -150,6 +156,90 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     console.error('Error creating work review:', error);
     return NextResponse.json(
       { error: 'Failed to create work review' },
+      { status: 500 }
+    );
+  }
+}
+
+// 处理作品审核（批准/拒绝）
+async function handleWorkReview(
+  request: NextRequest,
+  workId: string,
+  action: string,
+  reason?: string
+) {
+  try {
+    // 验证 action 参数
+    if (!action || (action !== 'approve' && action !== 'reject')) {
+      return NextResponse.json(
+        { error: 'Invalid action. Must be "approve" or "reject"' },
+        { status: 400 }
+      );
+    }
+
+    // 拒绝作品时必须提供原因
+    if (action === 'reject' && (!reason || !reason.trim())) {
+      return NextResponse.json(
+        { error: 'Reason is required when rejecting a work' },
+        { status: 400 }
+      );
+    }
+
+    // 更新作品状态
+    const newStatus = action === 'approve' ? 'published' : 'rejected';
+
+    const updatedWork = await prisma.work.update({
+      where: { id: workId },
+      data: {
+        status: newStatus,
+        // 如果是拒绝，可以在 metadata 中记录原因
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            username: true,
+            nickname: true,
+          },
+        },
+        project: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+      },
+    });
+
+    // 创建审计日志
+    await createAuditLog({
+      action: action === 'approve' ? 'WORK_APPROVED' : 'WORK_REJECTED',
+      entityType: 'Work',
+      entityId: workId,
+      metadata: {
+        action,
+        reason: reason || null,
+        previousStatus: 'pending_review',
+        newStatus,
+      },
+      ipAddress: extractIpAddress(request.headers),
+      userAgent: extractUserAgent(request.headers),
+    });
+
+    // 如果作品被批准，给用户奖励积分
+    if (action === 'approve') {
+      // 这里可以调用积分服务
+      // await awardPointsForWorkApproved(workId);
+    }
+
+    return NextResponse.json({
+      work: updatedWork,
+      message: action === 'approve' ? '作品已批准' : '作品已拒绝',
+    });
+  } catch (error) {
+    console.error('Error handling work review:', error);
+    return NextResponse.json(
+      { error: 'Failed to handle work review' },
       { status: 500 }
     );
   }

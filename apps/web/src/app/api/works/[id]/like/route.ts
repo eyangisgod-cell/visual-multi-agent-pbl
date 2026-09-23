@@ -10,15 +10,30 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
-    const body = await request.json();
-    const { userId } = body;
+    // 从 session cookie 获取当前用户 ID
+    const sessionToken = request.cookies.get('session')?.value;
 
-    if (!userId) {
+    if (!sessionToken) {
       return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
+        { error: 'Authentication required' },
+        { status: 401 }
       );
     }
+
+    // 验证 session 并获取用户 ID
+    const session = await prisma.session.findUnique({
+      where: { token: sessionToken },
+      include: { user: true },
+    });
+
+    if (!session || session.expiresAt < new Date()) {
+      return NextResponse.json(
+        { error: 'Session expired' },
+        { status: 401 }
+      );
+    }
+
+    const userId = session.userId;
 
     // 检查作品是否存在
     const work = await prisma.work.findUnique({
